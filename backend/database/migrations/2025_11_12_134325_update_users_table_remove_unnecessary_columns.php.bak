@@ -1,0 +1,46 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        // This migration should not be run if we're fixing the database
+        // Instead of removing columns, we'll now add them back if missing
+        Schema::table('users', function (Blueprint $table) {
+            if (!Schema::hasColumn('users', 'email_verified_at')) {
+                $table->timestamp('email_verified_at')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'remember_token')) {
+                $table->rememberToken();
+            }
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        // Only remove columns if they exist
+        Schema::table('users', function (Blueprint $table) {
+            $columnsToCheck = [];
+            if (Schema::hasColumn('users', 'email_verified_at')) {
+                $columnsToCheck[] = 'email_verified_at';
+            }
+            if (Schema::hasColumn('users', 'remember_token')) {
+                $columnsToCheck[] = 'remember_token';
+            }
+            
+            if (!empty($columnsToCheck)) {
+                $table->dropColumn($columnsToCheck);
+            }
+        });
+    }
+};
