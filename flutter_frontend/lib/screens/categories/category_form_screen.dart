@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../models/category.dart';
-import '../../providers/category_provider.dart';
+import 'package:flutter_frontend/models/category.dart';
+import 'package:flutter_frontend/providers/category_provider_change_notifier.dart';
 
 class CategoryFormScreen extends StatefulWidget {
   final Category? category; // Pass existing category for editing
@@ -16,7 +16,6 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
 
-  String _selectedType = 'expense';
 
   @override
   void initState() {
@@ -25,7 +24,6 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
     if (widget.category != null) {
       // Editing existing category
       _nameController.text = widget.category!.name ?? '';
-      _selectedType = widget.category!.type ?? 'expense';
     }
   }
 
@@ -89,43 +87,6 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Type selection
-              const Text(
-                'Category Type',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: RadioListTile<String>(
-                      title: const Text('Expense'),
-                      value: 'expense',
-                      groupValue: _selectedType,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedType = value!;
-                        });
-                      },
-                    ),
-                  ),
-                  Expanded(
-                    child: RadioListTile<String>(
-                      title: const Text('Income'),
-                      value: 'income',
-                      groupValue: _selectedType,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedType = value!;
-                        });
-                      },
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(height: 24),
 
               // Save button
@@ -142,7 +103,6 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                             bool success = await provider.updateCategory(
                               widget.category!.id!,
                               _nameController.text,
-                              _selectedType,
                             );
 
                             if (success) {
@@ -168,7 +128,6 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                             // Create new category
                             bool success = await provider.createCategory(
                               _nameController.text,
-                              _selectedType,
                             );
 
                             if (success) {

@@ -1,149 +1,50 @@
-import 'package:flutter/foundation.dart';
-import '../services/data_service.dart';
-import '../services/google_sign_in_service.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../config/api_config.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../repositories/api_repository.dart';
+import '../models/api_models.dart' hide ApiResponse;
+import '../models/api_response.dart' show ApiResponse;
+import 'global_providers.dart';
 
-class AuthProvider extends ChangeNotifier {
-  bool _isLoading = false;
-  String _message = '';
+final authStateProvider = StateProvider<User?>((ref) {
+  return null;
+});
 
-  bool get isLoading => _isLoading;
-  String get message => _message;
+final authProvider = StateNotifierProvider<AuthNotifier, User?>((ref) {
+  return AuthNotifier(ref);
+});
 
-  Future<bool> login(String email, String password) async {
-    _isLoading = true;
-    _message = '';
-    notifyListeners();
+class AuthNotifier extends StateNotifier<User?> {
+  Ref ref;
 
-    try {
-      final response = await DataService.login(
-        email: email,
-        password: password,
+  AuthNotifier(this.ref) : super(null);
+
+  Future<ApiResponse> login(String email, String password) async {
+    final response = await ref.read(apiRepositoryProvider).login(email, password);
+
+    if (response.success && response.data != null) {
+      final userData = response.data['data'];
+      final user = User(
+        id: userData['user']['id'],
+        name: userData['user']['name'],
+        email: userData['user']['email'],
+        token: userData['token'],
       );
 
-      _isLoading = false;
-      _message = response.message;
-      notifyListeners();
+      ref.read(apiRepositoryProvider).setAuthToken(user.token);
+      state = user;
 
-      return response.success;
-    } catch (e) {
-      _isLoading = false;
-      _message = 'Terjadi kesalahan: $e';
-      notifyListeners();
-      return false;
+      return response;
     }
+
+    return response;
   }
 
-  Future<bool> register(String name, String email, String password, String passwordConfirmation) async {
-    _isLoading = true;
-    _message = '';
-    notifyListeners();
-
-    try {
-      final response = await DataService.register(
-        name: name,
-        email: email,
-        password: password,
-        passwordConfirmation: passwordConfirmation,
-      );
-
-      _isLoading = false;
-      _message = response.message;
-      notifyListeners();
-
-      return response.success;
-    } catch (e) {
-      _isLoading = false;
-      _message = 'Terjadi kesalahan: $e';
-      notifyListeners();
-      return false;
-    }
+  Future<ApiResponse> register(String name, String email, String password) async {
+    final response = await ref.read(apiRepositoryProvider).register(name, email, password);
+    return response;
   }
 
-  Future<bool> logout() async {
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      final response = await DataService.logout();
-
-      _isLoading = false;
-      _message = response.message;
-      notifyListeners();
-
-      return response.success;
-    } catch (e) {
-      _isLoading = false;
-      _message = 'Terjadi kesalahan: $e';
-      notifyListeners();
-      return false;
-    }
-  }
-
-  Future<bool> signInWithGoogle() async {
-    _isLoading = true;
-    _message = '';
-    notifyListeners();
-
-    try {
-      // Sign in with Google
-      final googleUser = await GoogleSignInService.signIn();
-      if (googleUser == null) {
-        _isLoading = false;
-        _message = 'Sign in aborted';
-        notifyListeners();
-        return false;
-      }
-
-      // Get the ID token from Google
-      final googleAuth = await googleUser.authentication;
-      final idToken = googleAuth.idToken;
-
-      if (idToken == null) {
-        _isLoading = false;
-        _message = 'Failed to get ID token from Google';
-        notifyListeners();
-        return false;
-      }
-
-      // Send the ID token to the backend to get a JWT token
-      final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/auth/google'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode({
-          'id_token': idToken,
-        }),
-      );
-
-      final data = jsonDecode(response.body);
-      final success = data['success'] as bool;
-
-      _isLoading = false;
-      _message = data['message'] as String;
-      notifyListeners();
-
-      if (success) {
-        // Save the token to local storage
-        final token = data['data']['token'] as String?;
-        final name = data['data']['name'] as String?;
-        final email = data['data']['email'] as String?;
-
-        if (token != null) {
-          await DataService.saveToken(token);
-        }
-      }
-
-      return success;
-    } catch (e) {
-      _isLoading = false;
-      _message = 'Sign in with Google failed: $e';
-      notifyListeners();
-      return false;
-    }
+  void logout() {
+    ref.read(apiRepositoryProvider).setAuthToken(null);
+    state = null;
   }
 }

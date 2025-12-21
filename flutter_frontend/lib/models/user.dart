@@ -2,11 +2,19 @@ class User {
   final String? token;
   final String? name;
   final String? email;
+  final double? autoSavePercentage;
+  final double? autoSaveFixedAmount;
+  final int? autoSavePercentageSavingId;
+  final int? autoSaveFixedAmountSavingId;
 
   User({
     this.token,
     this.name,
     this.email,
+    this.autoSavePercentage,
+    this.autoSaveFixedAmount,
+    this.autoSavePercentageSavingId,
+    this.autoSaveFixedAmountSavingId,
   });
 
   factory User.fromJson(dynamic json) {
@@ -15,6 +23,10 @@ class User {
         token: null,
         name: null,
         email: null,
+        autoSavePercentage: null,
+        autoSaveFixedAmount: null,
+        autoSavePercentageSavingId: null,
+        autoSaveFixedAmountSavingId: null,
       );
     }
 
@@ -22,6 +34,10 @@ class User {
       token: json['token'] as String?,
       name: json['name'] as String?,
       email: json['email'] as String?,
+      autoSavePercentage: json['auto_save_percentage'] != null ? (json['auto_save_percentage'] is int ? json['auto_save_percentage'].toDouble() : json['auto_save_percentage']) : null,
+      autoSaveFixedAmount: json['auto_save_fixed_amount'] != null ? (json['auto_save_fixed_amount'] is int ? json['auto_save_fixed_amount'].toDouble() : json['auto_save_fixed_amount']) : null,
+      autoSavePercentageSavingId: json['auto_save_percentage_saving_id'],
+      autoSaveFixedAmountSavingId: json['auto_save_fixed_amount_saving_id'],
     );
   }
 
@@ -30,6 +46,10 @@ class User {
       'token': token,
       'name': name,
       'email': email,
+      'auto_save_percentage': autoSavePercentage,
+      'auto_save_fixed_amount': autoSaveFixedAmount,
+      'auto_save_percentage_saving_id': autoSavePercentageSavingId,
+      'auto_save_fixed_amount_saving_id': autoSaveFixedAmountSavingId,
     };
   }
 }

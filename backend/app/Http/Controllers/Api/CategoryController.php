@@ -3,91 +3,110 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreCategoryRequest;
-use App\Http\Requests\UpdateCategoryRequest;
-use App\Models\Category;
+use App\Services\CategoryServiceInterface;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
-class CategoryController extends BaseController
+class CategoryController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    private CategoryServiceInterface $categoryService;
+
+    public function __construct(CategoryServiceInterface $categoryService)
     {
-        $user = Auth::user();
+        $this->categoryService = $categoryService;
+    }
+
+    public function index(): JsonResponse
+    {
+        $userId = auth()->id();
+        $categories = $this->categoryService->getAllCategories($userId);
+
+        return response()->json([
+            'success' => true,
+            'data' => $categories,
+            'message' => 'Categories retrieved successfully',
+        ]);
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $userId = auth()->id();
         
-        // Check if user has admin role
-        if ($user->hasRole('admin')) {
-            $categories = Category::with('user')->paginate(10);
-        } else {
-            $categories = $user->categories()->paginate(10);
-        }
+        $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
 
-        return $this->sendResponse($categories, 'Categories retrieved successfully.');
+        $data = $request->all();
+        $data['user_id'] = $userId;
+        
+        $category = $this->categoryService->createCategory($data);
+
+        return response()->json([
+            'success' => true,
+            'data' => $category,
+            'message' => 'Category created successfully',
+        ], 201);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreCategoryRequest $request)
+    public function show(int $id): JsonResponse
     {
-        $user = Auth::user();
-        $input = $request->validated();
-        $input['user_id'] = $user->id;
+        $userId = auth()->id();
+        $category = $this->categoryService->getCategory($id, $userId);
 
-        $category = Category::create($input);
-
-        return $this->sendResponse($category, 'Category created successfully.', 201);
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Category $category)
-    {
-        $user = Auth::user();
-
-        // Check if user has admin role or owns the category
-        if (!$user->hasRole('admin') && $category->user_id !== $user->id) {
-            return $this->sendError('Unauthorized.', [], 403);
+        if (!$category) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Category not found',
+            ], 404);
         }
 
-        return $this->sendResponse($category, 'Category retrieved successfully.');
+        return response()->json([
+            'success' => true,
+            'data' => $category,
+            'message' => 'Category retrieved successfully',
+        ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateCategoryRequest $request, Category $category)
+    public function update(Request $request, int $id): JsonResponse
     {
-        $user = Auth::user();
+        $userId = auth()->id();
+        
+        $request->validate([
+            'name' => 'sometimes|string|max:255',
+        ]);
 
-        // Check if user has admin role or owns the category
-        if (!$user->hasRole('admin') && $category->user_id !== $user->id) {
-            return $this->sendError('Unauthorized.', [], 403);
+        $category = $this->categoryService->updateCategory($id, $userId, $request->all());
+
+        if (!$category) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Category not found',
+            ], 404);
         }
 
-        $category->update($request->validated());
-
-        return $this->sendResponse($category, 'Category updated successfully.');
+        return response()->json([
+            'success' => true,
+            'data' => $category,
+            'message' => 'Category updated successfully',
+        ]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Category $category)
+    public function destroy(int $id): JsonResponse
     {
-        $user = Auth::user();
+        $userId = auth()->id();
+        $deleted = $this->categoryService->deleteCategory($id, $userId);
 
-        // Check if user has admin role or owns the category
-        if (!$user->hasRole('admin') && $category->user_id !== $user->id) {
-            return $this->sendError('Unauthorized.', [], 403);
+        if (!$deleted) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Category not found',
+            ], 404);
         }
 
-        $category->delete();
-
-        return $this->sendResponse([], 'Category deleted successfully.');
+        return response()->json([
+            'success' => true,
+            'data' => null,
+            'message' => 'Category deleted successfully',
+        ]);
     }
 }

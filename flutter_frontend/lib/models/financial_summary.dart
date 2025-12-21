@@ -16,8 +16,17 @@ class FinancialSummary {
   });
 
   factory FinancialSummary.fromJson(dynamic json) {
+    // Handle the case where 'month' could be either String or int
+    final monthValue = json['month'];
+    String monthString;
+    if (monthValue is int) {
+      monthString = monthValue.toString().padLeft(2, '0'); // Convert to 2-digit string
+    } else {
+      monthString = monthValue?.toString() ?? '';
+    }
+
     return FinancialSummary(
-      month: json['month'] as String? ?? '',
+      month: monthString,
       year: json['year'] as int? ?? 0,
       totalIncome: (json['total_income'] as num?)?.toDouble() ?? 0.0,
       totalExpense: (json['total_expense'] as num?)?.toDouble() ?? 0.0,

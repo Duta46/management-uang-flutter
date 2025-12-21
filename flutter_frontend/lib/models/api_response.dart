@@ -19,11 +19,19 @@ class ApiResponse {
       );
     }
 
+    // Pastikan json adalah Map sebelum mengakses property-nya
+    if (json is! Map<String, dynamic>) {
+      return ApiResponse(
+        success: false,
+        message: 'Invalid response format: expected Map<String, dynamic>',
+      );
+    }
+
     return ApiResponse(
       success: json['success'] is bool ? json['success'] : false,
       data: json['data'],
       message: json['message'] is String ? json['message'] : 'Unknown error occurred',
-      errors: json['data'] is Map ? json['data'] as Map<String, dynamic>? : null,
+      errors: json['errors'] is Map ? json['errors'] as Map<String, dynamic>? : null,
     );
   }
 }

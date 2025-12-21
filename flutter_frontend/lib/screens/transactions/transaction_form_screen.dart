@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../models/transaction.dart';
-import '../../providers/transaction_provider.dart';
-import '../../providers/category_provider.dart';
+import 'package:flutter_frontend/providers/transaction_provider_change_notifier.dart';
+import 'package:flutter_frontend/providers/category_provider_change_notifier.dart';
+import '../../services/profile_service.dart';
+import '../../models/user.dart';
 
 class TransactionFormScreen extends StatefulWidget {
   final Transaction? transaction; // Pass existing transaction for editing
@@ -23,6 +25,14 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   String? _selectedCategory;
   String _selectedType = 'expense';
   DateTime _selectedDate = DateTime.now();
+
+  // Auto-save related variables
+  bool _autoSavePercentageEnabled = false;
+  double _autoSavePercentage = 0.0;
+  bool _autoSaveFixedAmountEnabled = false;
+  double _autoSaveFixedAmount = 0.0;
+  int? _selectedPercentageSavingId;
+  int? _selectedFixedAmountSavingId;
 
   @override
   void initState() {
@@ -45,6 +55,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       _dateController.text = DateFormat('yyyy-MM-dd').format(_selectedDate);
     }
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -133,7 +145,6 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                           });
                         },
                         items: categoryProvider.categories
-                            .where((cat) => cat.type == _selectedType)
                             .map<DropdownMenuItem<String>>((cat) {
                           return DropdownMenuItem<String>(
                             value: cat.id.toString(),
@@ -282,7 +293,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
+
 
                     // Save button
                     SizedBox(
@@ -291,6 +303,16 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                       child: ElevatedButton(
                         onPressed: () async {
                           if (_formKey.currentState!.validate() && _selectedCategory != null) {
+                            // Update user profile with auto-save settings and saving IDs if this is an income transaction
+                            if (_selectedType == 'income') {
+                              await ProfileService.updateAutoSaveSettings(
+                                autoSavePercentage: _autoSavePercentageEnabled ? _autoSavePercentage : 0,
+                                autoSaveFixedAmount: _autoSaveFixedAmountEnabled ? _autoSaveFixedAmount : 0,
+                                autoSavePercentageSavingId: _selectedPercentageSavingId,
+                                autoSaveFixedAmountSavingId: _selectedFixedAmountSavingId,
+                              );
+                            }
+
                             if (widget.transaction != null) {
                               // Update existing transaction
                               bool success = await transactionProvider.updateTransaction(
@@ -320,7 +342,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                               }
                             } else {
                               // Create new transaction
-                              bool success = await transactionProvider.createTransaction(
+                              bool success = await transactionProvider.createTransactionSimple(
                                 int.parse(_selectedCategory!),
                                 _amountController.text,
                                 _selectedType,

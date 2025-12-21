@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../providers/transaction_provider.dart';
+import 'package:flutter_frontend/providers/transaction_provider_change_notifier.dart';
 import 'transaction_form_screen.dart';
 
 class TransactionListScreen extends StatelessWidget {
@@ -18,9 +18,10 @@ class TransactionListScreen extends StatelessWidget {
       ),
       body: Consumer<TransactionProvider>(
         builder: (context, provider, child) {
-          if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+          // Load transactions when screen is built
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            provider.fetchTransactions();
+          });
 
           if (provider.transactions.isEmpty) {
             return const Center(
@@ -89,13 +90,16 @@ class TransactionListScreen extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => const TransactionFormScreen(),
             ),
           );
+          // Refresh data after adding new transaction
+          final transactionProvider = Provider.of<TransactionProvider>(context, listen: false);
+          await transactionProvider.fetchTransactions();
         },
         backgroundColor: Theme.of(context).primaryColor,
         child: const Icon(Icons.add, color: Colors.white),

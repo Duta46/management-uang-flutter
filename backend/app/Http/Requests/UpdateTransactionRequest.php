@@ -6,47 +6,19 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateTransactionRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
-            'category_id' => 'sometimes|required|exists:categories,id',
-            'amount' => 'sometimes|required|numeric|min:0.01',
-            'type' => 'sometimes|required|in:income,expense',
-            'description' => 'nullable|string',
-            'date' => 'sometimes|required|date',
-        ];
-    }
-
-    /**
-     * Get custom messages for validation errors.
-     *
-     * @return array
-     */
-    public function messages(): array
-    {
-        return [
-            'category_id.required' => 'Category is required.',
-            'category_id.exists' => 'Selected category does not exist.',
-            'amount.required' => 'Amount is required.',
-            'amount.numeric' => 'Amount must be a number.',
-            'amount.min' => 'Amount must be at least 0.01.',
-            'type.required' => 'Transaction type is required.',
-            'type.in' => 'Transaction type must be either "income" or "expense".',
-            'date.required' => 'Date is required.',
-            'date.date' => 'Date must be a valid date.',
+            'category_id' => 'sometimes|exists:categories,id',
+            'amount' => 'sometimes|numeric|min:0.01',
+            'type' => 'sometimes|in:income,expense',
+            'description' => 'nullable|string|max:255',
+            'date' => 'sometimes|date',
         ];
     }
 }

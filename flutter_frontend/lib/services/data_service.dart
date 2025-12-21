@@ -8,7 +8,6 @@ import '../models/user.dart';
 import '../models/category.dart';
 import '../models/transaction.dart';
 import '../models/budget.dart';
-import '../models/saving.dart';
 import '../models/api_response.dart';
 import '../models/financial_summary.dart';
 
@@ -72,6 +71,9 @@ class DataService {
     required String passwordConfirmation,
   }) async {
     try {
+      print('Register request to: ${ApiConfig.baseUrl}/register');
+      print('Register data: name=$name, email=$email');
+
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/register'),
         headers: await getHeaders(),
@@ -82,6 +84,9 @@ class DataService {
           'password_confirmation': passwordConfirmation,
         }),
       ).timeout(_timeout);
+
+      print('Register response status: ${response.statusCode}');
+      print('Register response body: ${response.body}');
 
       if (response.statusCode == 200 && response.body.isNotEmpty) {
         final data = jsonDecode(response.body);
@@ -103,6 +108,11 @@ class DataService {
           success: false,
           message: 'Invalid JSON response format: $e',
         );
+      } else if (e is SocketException) {
+        return AuthResponse(
+          success: false,
+          message: 'Network error - please check your internet connection: $e',
+        );
       } else {
         return AuthResponse(
           success: false,
@@ -117,6 +127,9 @@ class DataService {
     required String password,
   }) async {
     try {
+      print('Login request to: ${ApiConfig.baseUrl}/login');
+      print('Login data: email=$email');
+
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/login'),
         headers: await getHeaders(),
@@ -125,6 +138,9 @@ class DataService {
           'password': password,
         }),
       ).timeout(_timeout);
+
+      print('Login response status: ${response.statusCode}');
+      print('Login response body: ${response.body}');
 
       if (response.statusCode == 200 && response.body.isNotEmpty) {
         final data = jsonDecode(response.body);
@@ -151,6 +167,11 @@ class DataService {
         return AuthResponse(
           success: false,
           message: 'Invalid JSON response format: $e',
+        );
+      } else if (e is SocketException) {
+        return AuthResponse(
+          success: false,
+          message: 'Network error - please check your internet connection: $e',
         );
       } else {
         return AuthResponse(
@@ -206,6 +227,7 @@ class DataService {
   // Category methods
   static Future<CategoryApiResponse> getCategories() async {
     try {
+      print("Requesting categories from: ${ApiConfig.baseUrl}/categories");
       final response = await http.get(
         Uri.parse('${ApiConfig.baseUrl}/categories'),
         headers: await getHeaders(),
@@ -216,6 +238,14 @@ class DataService {
         final data = jsonDecode(response.body);
         print("Parsed JSON: $data"); // Debug log
         return CategoryApiResponse.fromJson(data);
+      } else if (response.statusCode == 401) {
+        print("Unauthorized access - token might be expired");
+        await clearToken(); // Clear invalid token
+        return CategoryApiResponse(
+          success: false,
+          message: 'Unauthorized access. Please login again.',
+          data: null,
+        );
       } else {
         print("Non-success status code: ${response.statusCode} or empty response body");
         return CategoryApiResponse(
@@ -236,6 +266,12 @@ class DataService {
         return CategoryApiResponse(
           success: false,
           message: 'Invalid JSON response format: $e',
+          data: null,
+        );
+      } else if (e is SocketException) {
+        return CategoryApiResponse(
+          success: false,
+          message: 'Network error - please check your internet connection: $e',
           data: null,
         );
       } else {
@@ -389,14 +425,25 @@ class DataService {
   // Transaction methods
   static Future<TransactionApiResponse> getTransactions() async {
     try {
+      print("Requesting transactions from: ${ApiConfig.baseUrl}/transactions");
       final response = await http.get(
         Uri.parse('${ApiConfig.baseUrl}/transactions'),
         headers: await getHeaders(),
       ).timeout(_timeout);
 
+      print("Get transactions response status: ${response.statusCode}");
       if (response.statusCode == 200 && response.body.isNotEmpty) {
         final data = jsonDecode(response.body);
+        print("Transactions data: $data");
         return TransactionApiResponse.fromJson(data);
+      } else if (response.statusCode == 401) {
+        print("Unauthorized access - token might be expired");
+        await clearToken(); // Clear invalid token
+        return TransactionApiResponse(
+          success: false,
+          message: 'Unauthorized access. Please login again.',
+          data: null,
+        );
       } else {
         return TransactionApiResponse(
           success: false,
@@ -415,6 +462,12 @@ class DataService {
         return TransactionApiResponse(
           success: false,
           message: 'Invalid JSON response format: $e',
+          data: null,
+        );
+      } else if (e is SocketException) {
+        return TransactionApiResponse(
+          success: false,
+          message: 'Network error - please check your internet connection: $e',
           data: null,
         );
       } else {
@@ -727,129 +780,4 @@ class DataService {
     }
   }
 
-  // Saving methods
-  static Future<SavingApiResponse> getSavings() async {
-    try {
-      final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/savings'),
-        headers: await getHeaders(),
-      ).timeout(_timeout);
-
-      final data = jsonDecode(response.body);
-      return SavingApiResponse.fromJson(data);
-    } catch (e) {
-      if (e is TimeoutException) {
-        return SavingApiResponse(
-          success: false,
-          message: 'Request timeout: $e',
-          data: null,
-        );
-      } else {
-        return SavingApiResponse(
-          success: false,
-          message: 'Network error: $e',
-          data: null,
-        );
-      }
-    }
-  }
-
-  static Future<SavingApiResponse> createSaving({
-    required String goalName,
-    required String targetAmount,
-    required String currentAmount,
-    required String deadline,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/savings'),
-        headers: await getHeaders(),
-        body: jsonEncode({
-          'goal_name': goalName,
-          'target_amount': targetAmount,
-          'current_amount': currentAmount,
-          'deadline': deadline,
-        }),
-      ).timeout(_timeout);
-
-      final data = jsonDecode(response.body);
-      return SavingApiResponse.fromJson(data);
-    } catch (e) {
-      if (e is TimeoutException) {
-        return SavingApiResponse(
-          success: false,
-          message: 'Request timeout: $e',
-          data: null,
-        );
-      } else {
-        return SavingApiResponse(
-          success: false,
-          message: 'Network error: $e',
-          data: null,
-        );
-      }
-    }
-  }
-
-  static Future<SavingApiResponse> updateSaving({
-    required int id,
-    required String goalName,
-    required String targetAmount,
-    required String currentAmount,
-    required String deadline,
-  }) async {
-    try {
-      final response = await http.put(
-        Uri.parse('${ApiConfig.baseUrl}/savings/$id'),
-        headers: await getHeaders(),
-        body: jsonEncode({
-          'goal_name': goalName,
-          'target_amount': targetAmount,
-          'current_amount': currentAmount,
-          'deadline': deadline,
-        }),
-      ).timeout(_timeout);
-
-      final data = jsonDecode(response.body);
-      return SavingApiResponse.fromJson(data);
-    } catch (e) {
-      if (e is TimeoutException) {
-        return SavingApiResponse(
-          success: false,
-          message: 'Request timeout: $e',
-          data: null,
-        );
-      } else {
-        return SavingApiResponse(
-          success: false,
-          message: 'Network error: $e',
-          data: null,
-        );
-      }
-    }
-  }
-
-  static Future<ApiResponse> deleteSaving(int id) async {
-    try {
-      final response = await http.delete(
-        Uri.parse('${ApiConfig.baseUrl}/savings/$id'),
-        headers: await getHeaders(),
-      ).timeout(_timeout);
-
-      final data = jsonDecode(response.body);
-      return ApiResponse.fromJson(data);
-    } catch (e) {
-      if (e is TimeoutException) {
-        return ApiResponse(
-          success: false,
-          message: 'Request timeout: $e',
-        );
-      } else {
-        return ApiResponse(
-          success: false,
-          message: 'Network error: $e',
-        );
-      }
-    }
-  }
 }
