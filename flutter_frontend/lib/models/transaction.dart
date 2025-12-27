@@ -27,20 +27,27 @@ class Transaction {
   });
 
   factory Transaction.fromJson(Map<String, dynamic> json) {
-    return Transaction(
-      id: _parseId(json['id']),
-      userId: _parseId(json['user_id']),
-      categoryId: _parseId(json['category_id']),
-      amount: json['amount']?.toString() ?? '0',
-      type: json['type']?.toString() ?? '',
-      description: json['description']?.toString(),
-      date: json['date']?.toString(),
-      createdAt: json['created_at']?.toString(),
-      updatedAt: json['updated_at']?.toString(),
-      category: json['category'] != null && json['category'] is Map<String, dynamic>
-          ? CategoryModel.Category.fromJson(json['category'])
-          : null,
-    );
+    try {
+      return Transaction(
+        id: _parseId(json['id']),
+        userId: _parseId(json['user_id']),
+        categoryId: _parseId(json['category_id']),
+        amount: json['amount']?.toString() ?? '0',
+        type: json['type']?.toString() ?? '',
+        description: json['description']?.toString(),
+        date: json['date']?.toString(),
+        createdAt: json['created_at']?.toString(),
+        updatedAt: json['updated_at']?.toString(),
+        category: json['category'] != null && json['category'] is Map<String, dynamic>
+            ? CategoryModel.Category.fromJson(json['category'])
+            : null,
+      );
+    } catch (e, stackTrace) {
+      print('Error parsing Transaction from JSON: $e');
+      print('Stack trace: $stackTrace');
+      print('JSON data: $json');
+      rethrow; // Re-throw untuk ditangani di level yang lebih tinggi
+    }
   }
 
   static int? _parseId(dynamic value) {

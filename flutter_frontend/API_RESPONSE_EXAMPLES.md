@@ -72,8 +72,8 @@
       }
     ],
     "links": {
-      "first": "http://localhost:8000/api/categories?page=1",
-      "last": "http://localhost:8000/api/categories?page=1",
+      "first": "https://note-grill-spencer-non.trycloudflare.com/api/categories?page=1",
+      "last": "https://note-grill-spencer-non.trycloudflare.com/api/categories?page=1",
       "prev": null,
       "next": null
     },
@@ -81,7 +81,7 @@
       "current_page": 1,
       "from": 1,
       "last_page": 1,
-      "path": "http://localhost:8000/api/categories",
+      "path": "https://note-grill-spencer-non.trycloudflare.com/api/categories",
       "per_page": 10,
       "to": 1,
       "total": 1
@@ -146,8 +146,8 @@
       }
     ],
     "links": {
-      "first": "http://localhost:8000/api/transactions?page=1",
-      "last": "http://localhost:8000/api/transactions?page=1",
+      "first": "https://note-grill-spencer-non.trycloudflare.com/api/transactions?page=1",
+      "last": "https://note-grill-spencer-non.trycloudflare.com/api/transactions?page=1",
       "prev": null,
       "next": null
     },
@@ -155,7 +155,7 @@
       "current_page": 1,
       "from": 1,
       "last_page": 1,
-      "path": "http://localhost:8000/api/transactions",
+      "path": "https://note-grill-spencer-non.trycloudflare.com/api/transactions",
       "per_page": 10,
       "to": 1,
       "total": 1
@@ -189,8 +189,8 @@
       }
     ],
     "links": {
-      "first": "http://localhost:8000/api/budgets?page=1",
-      "last": "http://localhost:8000/api/budgets?page=1",
+      "first": "https://note-grill-spencer-non.trycloudflare.com/api/budgets?page=1",
+      "last": "https://note-grill-spencer-non.trycloudflare.com/api/budgets?page=1",
       "prev": null,
       "next": null
     },
@@ -198,7 +198,7 @@
       "current_page": 1,
       "from": 1,
       "last_page": 1,
-      "path": "http://localhost:8000/api/budgets",
+      "path": "https://note-grill-spencer-non.trycloudflare.com/api/budgets",
       "per_page": 10,
       "to": 1,
       "total": 1
@@ -229,8 +229,8 @@
       }
     ],
     "links": {
-      "first": "http://localhost:8000/api/savings?page=1",
-      "last": "http://localhost:8000/api/savings?page=1",
+      "first": "https://note-grill-spencer-non.trycloudflare.com/api/savings?page=1",
+      "last": "https://note-grill-spencer-non.trycloudflare.com/api/savings?page=1",
       "prev": null,
       "next": null
     },
@@ -238,7 +238,7 @@
       "current_page": 1,
       "from": 1,
       "last_page": 1,
-      "path": "http://localhost:8000/api/savings",
+      "path": "https://note-grill-spencer-non.trycloudflare.com/api/savings",
       "per_page": 10,
       "to": 1,
       "total": 1

@@ -48,8 +48,30 @@ class TransactionProvider extends ChangeNotifier {
       print("TransactionProvider: Response data: ${response.data}"); // Debug log
 
       if (response.success) {
-        // Cek tipe data respons
-        if (response.data is Map<String, dynamic>) {
+        // Dari log, response.data bisa langsung berisi array transaksi atau objek dengan key 'data'
+        if (response.data is List) {
+          // Jika response.data langsung array transaksi
+          try {
+            List<Transaction> processedTransactions = [];
+            for (int i = 0; i < (response.data as List).length; i++) {
+              dynamic item = (response.data as List)[i];
+              print("TransactionProvider: Processing transaction at index $i: $item"); // Debug log
+
+              if (item is Map<String, dynamic>) {
+                processedTransactions.add(Transaction.fromJson(item));
+              } else {
+                print("TransactionProvider: Item at index $i is not a Map<String, dynamic>, it's ${item.runtimeType}"); // Debug log
+              }
+            }
+            _transactions = processedTransactions;
+            _message = 'Transactions loaded successfully (${_transactions.length} items)';
+            print("TransactionProvider: Loaded ${_transactions.length} transactions"); // Debug log
+          } catch (e, stackTrace) {
+            print("TransactionProvider: Error during mapping: $e"); // Debug log
+            print("Stack trace: $stackTrace"); // Debug log
+            _transactions = []; // Set to empty list to prevent crash
+          }
+        } else if (response.data is Map<String, dynamic>) {
           // Jika response.data adalah objek dengan key 'data' (struktur paginasi Laravel)
           final responseData = response.data as Map<String, dynamic>;
           final transactionListData = responseData['data'] as List<dynamic>?;
@@ -70,8 +92,9 @@ class TransactionProvider extends ChangeNotifier {
               _transactions = processedTransactions;
               _message = 'Transactions loaded successfully (${_transactions.length} items)';
               print("TransactionProvider: Loaded ${_transactions.length} transactions"); // Debug log
-            } catch (e) {
+            } catch (e, stackTrace) {
               print("TransactionProvider: Error during mapping: $e"); // Debug log
+              print("Stack trace: $stackTrace"); // Debug log
               _transactions = []; // Set to empty list to prevent crash
             }
           } else {
@@ -86,9 +109,10 @@ class TransactionProvider extends ChangeNotifier {
         _message = response.message ?? 'Failed to load transactions';
         print("TransactionProvider: Error - ${_message}"); // Debug log
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       _message = e.toString();
       print("TransactionProvider: Exception caught: $e"); // Debug log
+      print("Stack trace: $stackTrace"); // Debug log
     } finally {
       notifyListeners();
     }

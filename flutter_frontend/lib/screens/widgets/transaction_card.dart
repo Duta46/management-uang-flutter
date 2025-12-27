@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/transaction.dart';
-import '../theme/app_theme.dart';
+import '../../models/transaction.dart';
+import '../../theme/app_theme.dart';
 
 class TransactionCard extends StatelessWidget {
   final Transaction transaction;

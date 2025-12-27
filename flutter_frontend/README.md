@@ -129,7 +129,7 @@ A Laravel-based REST API for personal finance tracking with user authentication 
 
 ### Register a new user
 ```bash
-curl -X POST http://localhost:8000/api/register \
+curl -X POST https://note-grill-spencer-non.trycloudflare.com/api/register \
   -H "Content-Type: application/json" \
   -d '{
     "name": "John Doe",
@@ -141,7 +141,7 @@ curl -X POST http://localhost:8000/api/register \
 
 ### Login
 ```bash
-curl -X POST http://localhost:8000/api/login \
+curl -X POST https://note-grill-spencer-non.trycloudflare.com/api/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "john@example.com",
@@ -151,7 +151,7 @@ curl -X POST http://localhost:8000/api/login \
 
 ### Create a category (with authentication token)
 ```bash
-curl -X POST http://localhost:8000/api/categories \
+curl -X POST https://note-grill-spencer-non.trycloudflare.com/api/categories \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -d '{

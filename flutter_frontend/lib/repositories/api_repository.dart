@@ -159,11 +159,13 @@ class ApiRepository {
       print("API Repository: getCategories response - Status: ${response.statusCode}"); // Debug log
       print("API Repository: getCategories response data: ${response.data}"); // Debug log
       return Response.ApiResponse.fromJson(response.data);
-    } catch (e) {
+    } catch (e, stackTrace) {
       print("API Repository: getCategories error: $e"); // Debug log
+      print("Stack trace: $stackTrace"); // Debug log
       if (e is DioException) {
         print("API Repository: Dio error details: ${e.response?.data}"); // Debug log
         print("API Repository: Dio status code: ${e.response?.statusCode}"); // Debug log
+        print("API Repository: Dio error request options: ${e.requestOptions.uri}"); // Debug log
       }
       return Response.ApiResponse(
         success: false,

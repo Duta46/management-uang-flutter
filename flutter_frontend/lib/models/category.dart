@@ -12,11 +12,18 @@ class Category {
   });
 
   factory Category.fromJson(Map<String, dynamic> json) {
-    return Category(
-      id: _parseId(json['id']),
-      userId: _parseId(json['user_id']),
-      name: json['name']?.toString() ?? 'Unknown',
-    );
+    try {
+      return Category(
+        id: _parseId(json['id']),
+        userId: _parseId(json['user_id']),
+        name: json['name']?.toString() ?? 'Unknown',
+      );
+    } catch (e, stackTrace) {
+      print('Error parsing Category from JSON: $e');
+      print('Stack trace: $stackTrace');
+      print('JSON data: $json');
+      rethrow; // Re-throw untuk ditangani di level yang lebih tinggi
+    }
   }
 
   static int? _parseId(dynamic value) {

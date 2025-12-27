@@ -254,7 +254,9 @@ class DataService {
           data: null,
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print("Error in getCategories: $e");
+      print("Stack trace: $stackTrace");
       if (e is TimeoutException) {
         return CategoryApiResponse(
           success: false,
@@ -451,7 +453,9 @@ class DataService {
           data: null,
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print("Error in getTransactions: $e");
+      print("Stack trace: $stackTrace");
       if (e is TimeoutException) {
         return TransactionApiResponse(
           success: false,

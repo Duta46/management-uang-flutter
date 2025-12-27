@@ -41,8 +41,9 @@ class CategoryProvider extends ChangeNotifier {
             _categories = processedCategories;
             _message = 'Kategori berhasil dimuat (${_categories.length} item)';
             print("CategoryProvider: Loaded ${_categories.length} categories"); // Debug log
-          } catch (e) {
+          } catch (e, stackTrace) {
             print("CategoryProvider: Error during mapping: $e"); // Debug log
+            print("Stack trace: $stackTrace"); // Debug log
             _categories = []; // Set to empty list to prevent crash
           }
         } else if (response.data is Map<String, dynamic>) {
@@ -64,8 +65,9 @@ class CategoryProvider extends ChangeNotifier {
               _categories = processedCategories;
               _message = 'Kategori berhasil dimuat (${_categories.length} item)';
               print("CategoryProvider: Loaded ${_categories.length} categories"); // Debug log
-            } catch (e) {
+            } catch (e, stackTrace) {
               print("CategoryProvider: Error during mapping: $e"); // Debug log
+              print("Stack trace: $stackTrace"); // Debug log
               _categories = []; // Set to empty list to prevent crash
             }
           } else {
@@ -80,9 +82,10 @@ class CategoryProvider extends ChangeNotifier {
         _message = response.message ?? 'Gagal memuat kategori';
         print("CategoryProvider: Error - ${_message}"); // Debug log
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       _message = e.toString();
       print("CategoryProvider: Exception caught: $e"); // Debug log
+      print("Stack trace: $stackTrace"); // Debug log
     } finally {
       notifyListeners();
     }

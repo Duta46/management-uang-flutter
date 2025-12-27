@@ -23,6 +23,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('name');
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('transactions', function (Blueprint $table) {
@@ -34,6 +35,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->date('date');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

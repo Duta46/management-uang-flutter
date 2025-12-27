@@ -18,27 +18,34 @@ class User {
   });
 
   factory User.fromJson(dynamic json) {
-    if (json == null) {
-      return User(
-        token: null,
-        name: null,
-        email: null,
-        autoSavePercentage: null,
-        autoSaveFixedAmount: null,
-        autoSavePercentageSavingId: null,
-        autoSaveFixedAmountSavingId: null,
-      );
-    }
+    try {
+      if (json == null) {
+        return User(
+          token: null,
+          name: null,
+          email: null,
+          autoSavePercentage: null,
+          autoSaveFixedAmount: null,
+          autoSavePercentageSavingId: null,
+          autoSaveFixedAmountSavingId: null,
+        );
+      }
 
-    return User(
-      token: json['token'] as String?,
-      name: json['name'] as String?,
-      email: json['email'] as String?,
-      autoSavePercentage: json['auto_save_percentage'] != null ? (json['auto_save_percentage'] is int ? json['auto_save_percentage'].toDouble() : json['auto_save_percentage']) : null,
-      autoSaveFixedAmount: json['auto_save_fixed_amount'] != null ? (json['auto_save_fixed_amount'] is int ? json['auto_save_fixed_amount'].toDouble() : json['auto_save_fixed_amount']) : null,
-      autoSavePercentageSavingId: json['auto_save_percentage_saving_id'],
-      autoSaveFixedAmountSavingId: json['auto_save_fixed_amount_saving_id'],
-    );
+      return User(
+        token: json['token'] as String?,
+        name: json['name'] as String?,
+        email: json['email'] as String?,
+        autoSavePercentage: json['auto_save_percentage'] != null ? (json['auto_save_percentage'] is int ? json['auto_save_percentage'].toDouble() : json['auto_save_percentage']) : null,
+        autoSaveFixedAmount: json['auto_save_fixed_amount'] != null ? (json['auto_save_fixed_amount'] is int ? json['auto_save_fixed_amount'].toDouble() : json['auto_save_fixed_amount']) : null,
+        autoSavePercentageSavingId: json['auto_save_percentage_saving_id'],
+        autoSaveFixedAmountSavingId: json['auto_save_fixed_amount_saving_id'],
+      );
+    } catch (e, stackTrace) {
+      print('Error parsing User from JSON: $e');
+      print('Stack trace: $stackTrace');
+      print('JSON data: $json');
+      rethrow; // Re-throw untuk ditangani di level yang lebih tinggi
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -68,31 +75,38 @@ class AuthResponse {
   });
 
   factory AuthResponse.fromJson(dynamic json) {
-    if (json == null) {
+    try {
+      if (json == null) {
+        return AuthResponse(
+          success: false,
+          data: null,
+          message: 'Response is null',
+          errors: null,
+        );
+      }
+
+      User? userData;
+      if (json['data'] != null) {
+        userData = User.fromJson(json['data']);
+      }
+
+      Map<String, dynamic>? errors;
+      if (json['data'] is Map && (json['data'] as Map).containsKey('email') ||
+          (json['data'] as Map).containsKey('password')) {
+        errors = json['data'] as Map<String, dynamic>?;
+      }
+
       return AuthResponse(
-        success: false,
-        data: null,
-        message: 'Response is null',
-        errors: null,
+        success: json['success'] is bool ? json['success'] : false,
+        data: userData,
+        message: json['message'] is String ? json['message'] : 'Unknown error occurred',
+        errors: errors,
       );
+    } catch (e, stackTrace) {
+      print('Error parsing AuthResponse from JSON: $e');
+      print('Stack trace: $stackTrace');
+      print('JSON data: $json');
+      rethrow; // Re-throw untuk ditangani di level yang lebih tinggi
     }
-
-    User? userData;
-    if (json['data'] != null) {
-      userData = User.fromJson(json['data']);
-    }
-
-    Map<String, dynamic>? errors;
-    if (json['data'] is Map && (json['data'] as Map).containsKey('email') ||
-        (json['data'] as Map).containsKey('password')) {
-      errors = json['data'] as Map<String, dynamic>?;
-    }
-
-    return AuthResponse(
-      success: json['success'] is bool ? json['success'] : false,
-      data: userData,
-      message: json['message'] is String ? json['message'] : 'Unknown error occurred',
-      errors: errors,
-    );
   }
 }

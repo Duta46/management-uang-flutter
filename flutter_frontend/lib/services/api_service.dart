@@ -1,107 +1,136 @@
-import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import '../models/api_response.dart' as Response;
 import '../config/api_config.dart';
-import '../models/api_response.dart';
-import '../models/category.dart';
+import '../utils/logger.dart';
 
 class ApiService {
-  static const String _tokenKey = 'user_token';
-  static String? _token;
-
-  // Initialize token from shared preferences
-  static Future<void> initialize() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    _token = prefs.getString(_tokenKey);
-  }
-
-  // Save token to shared preferences
-  static Future<void> saveToken(String? token) async {
-    _token = token;
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    if (token != null) {
-      await prefs.setString(_tokenKey, token);
-    } else {
-      await prefs.remove(_tokenKey);
-    }
-  }
-
-  // Get current token
-  static String? getToken() {
-    return _token;
-  }
-
-  // Clear token
-  static Future<void> clearToken() async {
-    _token = null;
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_tokenKey);
-  }
-
-  // Get headers with authorization
-  static Future<Map<String, String>> getHeaders() async {
-    Map<String, String> headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
-
-    if (_token != null) {
-      headers['Authorization'] = 'Bearer $_token';
-    }
-
-    return headers;
-  }
-
-
-  // Category methods
-  static Future<ApiResponse> getCategories() async {
+  static Future<Response.ApiResponse> get(String endpoint) async {
     try {
+      Logger.api('GET request to: ${ApiConfig.baseUrl}$endpoint');
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/categories'),
-        headers: await getHeaders(),
+        Uri.parse('${ApiConfig.baseUrl}$endpoint'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
       );
+
+      Logger.api('GET response status: ${response.statusCode}');
+      Logger.api('GET response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return ApiResponse.fromJson(data);
+        return Response.ApiResponse.fromJson(data);
       } else {
-        return ApiResponse(
+        return Response.ApiResponse(
           success: false,
           message: 'Error: ${response.statusCode}',
         );
       }
-    } catch (e) {
-      return ApiResponse(
+    } catch (e, stackTrace) {
+      Logger.error('GET request failed: $e', stackTrace: stackTrace);
+      return Response.ApiResponse(
         success: false,
-        message: 'Network error: $e',
+        message: e.toString(),
       );
     }
   }
 
-  static Future<ApiResponse> createCategory(String name, String type) async {
+  static Future<Response.ApiResponse> post(String endpoint, Map<String, dynamic> data) async {
     try {
+      Logger.api('POST request to: ${ApiConfig.baseUrl}$endpoint with data: $data');
       final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/categories'),
-        headers: await getHeaders(),
-        body: jsonEncode({
-          'name': name,
-          'type': type,
-        }),
+        Uri.parse('${ApiConfig.baseUrl}$endpoint'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode(data),
       );
 
-      if (response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-        return ApiResponse.fromJson(data);
+      Logger.api('POST response status: ${response.statusCode}');
+      Logger.api('POST response body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = jsonDecode(response.body);
+        return Response.ApiResponse.fromJson(responseData);
       } else {
-        return ApiResponse(
+        return Response.ApiResponse(
           success: false,
           message: 'Error: ${response.statusCode}',
         );
       }
-    } catch (e) {
-      return ApiResponse(
+    } catch (e, stackTrace) {
+      Logger.error('POST request failed: $e', stackTrace: stackTrace);
+      return Response.ApiResponse(
         success: false,
-        message: 'Network error: $e',
+        message: e.toString(),
+      );
+    }
+  }
+
+  static Future<Response.ApiResponse> put(String endpoint, Map<String, dynamic> data) async {
+    try {
+      Logger.api('PUT request to: ${ApiConfig.baseUrl}$endpoint with data: $data');
+      final response = await http.put(
+        Uri.parse('${ApiConfig.baseUrl}$endpoint'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode(data),
+      );
+
+      Logger.api('PUT response status: ${response.statusCode}');
+      Logger.api('PUT response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        return Response.ApiResponse.fromJson(responseData);
+      } else {
+        return Response.ApiResponse(
+          success: false,
+          message: 'Error: ${response.statusCode}',
+        );
+      }
+    } catch (e, stackTrace) {
+      Logger.error('PUT request failed: $e', stackTrace: stackTrace);
+      return Response.ApiResponse(
+        success: false,
+        message: e.toString(),
+      );
+    }
+  }
+
+  static Future<Response.ApiResponse> delete(String endpoint) async {
+    try {
+      Logger.api('DELETE request to: ${ApiConfig.baseUrl}$endpoint');
+      final response = await http.delete(
+        Uri.parse('${ApiConfig.baseUrl}$endpoint'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      );
+
+      Logger.api('DELETE response status: ${response.statusCode}');
+      Logger.api('DELETE response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        return Response.ApiResponse.fromJson(responseData);
+      } else {
+        return Response.ApiResponse(
+          success: false,
+          message: 'Error: ${response.statusCode}',
+        );
+      }
+    } catch (e, stackTrace) {
+      Logger.error('DELETE request failed: $e', stackTrace: stackTrace);
+      return Response.ApiResponse(
+        success: false,
+        message: e.toString(),
       );
     }
   }
