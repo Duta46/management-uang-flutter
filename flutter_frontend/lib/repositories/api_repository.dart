@@ -454,4 +454,178 @@ class ApiRepository {
       );
     }
   }
+
+  // AI Analysis Methods using Qwen AI via OpenRouter
+  /**
+   * Get financial insights using AI
+   * Uses Qwen AI model via OpenRouter API for financial analysis
+   */
+  Future<Response.ApiResponse> getFinancialInsights({
+    String analysisType = 'general',
+    String? startDate,
+    String? endDate,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '$baseUrl/ai-analysis/insights',
+        queryParameters: {
+          'type': analysisType,
+          'start_date': startDate,
+          'end_date': endDate,
+        },
+      );
+      return Response.ApiResponse.fromJson(response.data);
+    } catch (e) {
+      return Response.ApiResponse(
+        success: false,
+        message: e.toString(),
+      );
+    }
+  }
+
+  /**
+   * Get spending pattern analysis using AI
+   * Uses Qwen AI model via OpenRouter API for spending pattern analysis
+   */
+  Future<Response.ApiResponse> getSpendingPatternAnalysis({
+    String? startDate,
+    String? endDate,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '$baseUrl/ai-analysis/spending-pattern',
+        queryParameters: {
+          'start_date': startDate,
+          'end_date': endDate,
+        },
+      );
+      return Response.ApiResponse.fromJson(response.data);
+    } catch (e) {
+      return Response.ApiResponse(
+        success: false,
+        message: e.toString(),
+      );
+    }
+  }
+
+  /**
+   * Get budget recommendations using AI
+   * Uses Qwen AI model via OpenRouter API for budget recommendations
+   */
+  Future<Response.ApiResponse> getBudgetRecommendations({
+    String? startDate,
+    String? endDate,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '$baseUrl/ai-analysis/budget-recommendations',
+        queryParameters: {
+          'start_date': startDate,
+          'end_date': endDate,
+        },
+      );
+      return Response.ApiResponse.fromJson(response.data);
+    } catch (e) {
+      return Response.ApiResponse(
+        success: false,
+        message: e.toString(),
+      );
+    }
+  }
+
+  /**
+   * Get savings insights using AI
+   * Uses Qwen AI model via OpenRouter API for savings analysis
+   */
+  Future<Response.ApiResponse> getSavingsInsights({
+    String? startDate,
+    String? endDate,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '$baseUrl/ai-analysis/savings-insights',
+        queryParameters: {
+          'start_date': startDate,
+          'end_date': endDate,
+        },
+      );
+      return Response.ApiResponse.fromJson(response.data);
+    } catch (e) {
+      return Response.ApiResponse(
+        success: false,
+        message: e.toString(),
+      );
+    }
+  }
+
+  /**
+   * Generate custom analysis using AI
+   * Uses Qwen AI model via OpenRouter API for custom financial analysis
+   */
+  Future<Response.ApiResponse> generateAnalysis({
+    String analysisType = 'general',
+    String? startDate,
+    String? endDate,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '$baseUrl/ai-analysis/generate',
+        data: {
+          'type': analysisType,
+          'start_date': startDate,
+          'end_date': endDate,
+        },
+      );
+      return Response.ApiResponse.fromJson(response.data);
+    } catch (e) {
+      return Response.ApiResponse(
+        success: false,
+        message: e.toString(),
+      );
+    }
+  }
+
+  // Financial Chatbot Methods using Qwen AI via OpenRouter
+  /**
+   * Ask a question to the financial chatbot
+   * Uses Qwen AI model via OpenRouter API for financial advice
+   */
+  Future<Response.ApiResponse> askChatbotQuestion(String question) async {
+    try {
+      final response = await _dio.post(
+        '$baseUrl/chatbot/ask',
+        data: {
+          'question': question,
+        },
+      );
+      return Response.ApiResponse.fromJson(response.data);
+    } catch (e) {
+      return Response.ApiResponse(
+        success: false,
+        message: e.toString(),
+      );
+    }
+  }
+
+  /**
+   * Get chatbot conversation history
+   * Retrieves previous conversations with the financial chatbot
+   */
+  Future<Response.ApiResponse> getChatbotHistory({int limit = 10, int page = 1}) async {
+    try {
+      final response = await _dio.get(
+        '$baseUrl/chatbot/history',
+        queryParameters: {
+          'limit': limit,
+          'page': page,
+        },
+      );
+      return Response.ApiResponse.fromJson(response.data);
+    } catch (e) {
+      return Response.ApiResponse(
+        success: false,
+        message: e.toString(),
+      );
+    }
+  }
 }

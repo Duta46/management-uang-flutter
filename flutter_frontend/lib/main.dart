@@ -5,9 +5,11 @@ import 'package:flutter_frontend/providers/auth_provider_change_notifier.dart';
 import 'package:flutter_frontend/providers/category_provider_change_notifier.dart';
 import 'package:flutter_frontend/providers/transaction_provider_change_notifier.dart';
 import 'package:flutter_frontend/providers/dashboard_provider.dart';
+import 'package:flutter_frontend/providers/ai_analysis_provider.dart';
 import 'widgets/error_boundary.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/main_navigation_screen.dart';
+import 'screens/financial_chatbot_screen.dart';
 import 'theme/app_theme.dart';
 import 'utils/logger.dart';
 
@@ -46,6 +48,9 @@ class MyApp extends StatelessWidget {
           ChangeNotifierProvider<DashboardProvider>(
             create: (context) => DashboardProvider(),
           ),
+          ChangeNotifierProvider<AiAnalysisProvider>(
+            create: (context) => AiAnalysisProvider(),
+          ),
         ],
         child: Builder(
           builder: (context) {
@@ -54,6 +59,9 @@ class MyApp extends StatelessWidget {
               debugShowCheckedModeBanner: false,
               theme: AppTheme.lightTheme,
               home: _buildHomeScreen(context),
+              routes: {
+                '/chatbot': (context) => const FinancialChatbotScreen(),
+              },
             );
           },
         ),

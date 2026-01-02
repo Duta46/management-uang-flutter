@@ -713,14 +713,38 @@ class DataService {
   static Future<FinancialSummaryResponse> getFinancialSummary({required int year, required int month}) async {
     try {
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/financial-summary?year=$year&month=${month.toString().padLeft(2, '0')}'),
+        Uri.parse('${ApiConfig.baseUrl}/reports/monthly?year=$year&month=$month'),
         headers: await getHeaders(),
       ).timeout(_timeout);
 
       print("Raw response from getFinancialSummary: ${response.body}"); // Debug log
       final data = jsonDecode(response.body);
       print("Parsed JSON from financial summary: $data"); // Debug log
-      return FinancialSummaryResponse.fromJson(data);
+
+      // Convert the report data to financial summary format
+      if (data['success'] && data['data'] != null) {
+        final summaryData = data['data']['summary'];
+        final financialSummary = FinancialSummary(
+          month: month.toString().padLeft(2, '0'),
+          year: year,
+          totalIncome: (summaryData['income'] as num?)?.toDouble() ?? 0.0,
+          totalExpense: (summaryData['expense'] as num?)?.toDouble() ?? 0.0,
+          netTotal: (summaryData['balance'] as num?)?.toDouble() ?? 0.0,
+          totalSaving: 0.0, // Calculate saving based on income and expense if needed
+        );
+
+        return FinancialSummaryResponse(
+          success: true,
+          data: financialSummary,
+          message: data['message'],
+        );
+      } else {
+        return FinancialSummaryResponse(
+          success: false,
+          message: data['message'] ?? 'Failed to get financial summary',
+          data: null,
+        );
+      }
     } catch (e) {
       if (e is TimeoutException) {
         return FinancialSummaryResponse(
@@ -740,33 +764,55 @@ class DataService {
 
   static Future<MonthlyFinancialDataResponse> getMonthlyFinancialData({required int year}) async {
     try {
-      final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/monthly-financial-data?year=$year'),
-        headers: await getHeaders(),
-      ).timeout(_timeout);
-
-      print("Raw response from getMonthlyFinancialData: ${response.body}"); // Debug log
-      final data = jsonDecode(response.body);
-      print("Parsed JSON from monthly financial data: $data"); // Debug log
-
-      // Return MonthlyFinancialDataResponse
-      // Since we don't have this model yet, let's create a temporary solution
-      // For now, we'll directly return the response as FinancialSummaryResponse
-      // and handle the data parsing in the provider
-      final parsedData = jsonDecode(response.body);
-      if (parsedData['success']) {
-        return MonthlyFinancialDataResponse(
-          success: parsedData['success'],
-          data: MonthlyFinancialData.fromJson(parsedData['data']),
-          message: parsedData['message'],
-        );
-      } else {
-        return MonthlyFinancialDataResponse(
-          success: false,
-          data: null,
-          message: parsedData['message'] ?? 'Failed to get monthly financial data',
-        );
+      // First, get all monthly data for the year by calling the endpoint 12 times
+      // This is not efficient but works for now
+      List<Future<FinancialSummaryResponse>> futures = [];
+      for (int month = 1; month <= 12; month++) {
+        futures.add(getFinancialSummary(year: year, month: month));
       }
+
+      final results = await Future.wait(futures);
+      List<FinancialSummary> monthlyData = [];
+      FinancialSummary? currentMonth;
+      FinancialSummary? nextMonth;
+
+      final currentDateTime = DateTime.now();
+      final currentMonthNum = currentDateTime.month;
+      final currentYear = currentDateTime.year;
+
+      for (int i = 0; i < results.length; i++) {
+        final result = results[i];
+        if (result.success && result.data != null) {
+          final summary = result.data!;
+          // Only add to monthlyData if it has actual values
+          if (summary.totalIncome != 0 || summary.totalExpense != 0) {
+            monthlyData.add(summary);
+          }
+
+          // Set current month data
+          if (i + 1 == currentMonthNum && year == currentYear) {
+            currentMonth = summary;
+          }
+
+          // Set next month data
+          if (i + 1 == currentMonthNum + 1 && year == currentYear) {
+            nextMonth = summary;
+          } else if (currentMonthNum == 12 && i + 1 == 1 && year == currentYear + 1) {
+            // Handle year rollover
+            nextMonth = summary;
+          }
+        }
+      }
+
+      return MonthlyFinancialDataResponse(
+        success: true,
+        data: MonthlyFinancialData(
+          monthlyData: monthlyData,
+          currentMonth: currentMonth,
+          nextMonth: nextMonth,
+        ),
+        message: 'Monthly financial data retrieved successfully',
+      );
     } catch (e) {
       if (e is TimeoutException) {
         return MonthlyFinancialDataResponse(

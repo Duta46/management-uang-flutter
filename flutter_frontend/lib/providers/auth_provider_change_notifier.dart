@@ -139,32 +139,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> signInWithGoogle() async {
-    setLoading(true);
-    setErrorMessage(null);
-
-    try {
-      // Since Google Sign-In requires platform-specific setup,
-      // we'll simulate the functionality for now
-      // In a real app, you would implement the actual Google sign-in
-      final googleUser = await _authService.signInWithGoogle();
-
-      if (googleUser != null) {
-        // For demo purposes, we'll simulate a successful login
-        setMessage('Login Google berhasil');
-        setLoading(false);
-        return true;
-      } else {
-        setErrorMessage('Login Google gagal');
-        setLoading(false);
-        return false;
-      }
-    } catch (e) {
-      setErrorMessage(e.toString());
-      setLoading(false);
-      return false;
-    }
-  }
 
   Future<bool> logout() async {
     try {

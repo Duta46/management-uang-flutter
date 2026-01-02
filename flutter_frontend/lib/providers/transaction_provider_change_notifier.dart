@@ -18,14 +18,14 @@ class TransactionProvider extends ChangeNotifier {
   double get income {
     return _transactions
         .where((transaction) => transaction.type == 'income')
-        .map((transaction) => double.tryParse(transaction.amount) ?? 0)
+        .map((transaction) => transaction.amount)
         .fold(0.0, (prev, amount) => prev + amount);
   }
 
   double get expense {
     return _transactions
         .where((transaction) => transaction.type == 'expense')
-        .map((transaction) => double.tryParse(transaction.amount) ?? 0)
+        .map((transaction) => transaction.amount)
         .fold(0.0, (prev, amount) => prev + amount);
   }
 

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../models/transaction.dart';
 import 'package:flutter_frontend/providers/transaction_provider_change_notifier.dart';
 import 'package:flutter_frontend/providers/category_provider_change_notifier.dart';
+import 'package:flutter_frontend/theme/app_theme.dart';
 import '../../services/profile_service.dart';
 import '../../models/user.dart';
 
@@ -40,11 +41,11 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
     if (widget.transaction != null) {
       // Editing existing transaction
-      _amountController.text = widget.transaction!.amount;
+      _amountController.text = widget.transaction!.amount.toString();
       _descriptionController.text = widget.transaction!.description ?? '';
 
       if (widget.transaction!.date != null) {
-        _selectedDate = DateTime.parse(widget.transaction!.date!);
+        _selectedDate = widget.transaction!.date!;
         _dateController.text = DateFormat('yyyy-MM-dd').format(_selectedDate);
       }
 
@@ -56,16 +57,21 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.transaction != null ? 'Edit Transaksi' : 'Tambah Transaksi'),
-        backgroundColor: Theme.of(context).primaryColor,
+        title: Text(
+          widget.transaction != null ? 'Edit Transaksi' : 'Tambah Transaksi',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
+        centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -82,91 +88,195 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Type selection
-                    const Text(
-                      'Jenis Transaksi',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.cardColor,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.1),
+                            spreadRadius: 1,
+                            blurRadius: 5,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: RadioListTile<String>(
-                            title: const Text('Pengeluaran'),
-                            value: 'expense',
-                            groupValue: _selectedType,
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedType = value!;
-                              });
-                            },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Jenis Transaksi',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textColor,
+                            ),
                           ),
-                        ),
-                        Expanded(
-                          child: RadioListTile<String>(
-                            title: const Text('Pemasukan'),
-                            value: 'income',
-                            groupValue: _selectedType,
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedType = value!;
-                              });
-                            },
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedType = 'expense';
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: _selectedType == 'expense'
+                                        ? AppTheme.expenseLightColor
+                                        : Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: _selectedType == 'expense'
+                                          ? AppTheme.expenseColor
+                                          : Colors.grey.shade300,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Icon(
+                                          Icons.money_off,
+                                          color: _selectedType == 'expense'
+                                            ? AppTheme.expenseColor
+                                            : Colors.grey,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Pengeluaran',
+                                          style: TextStyle(
+                                            fontWeight: _selectedType == 'expense'
+                                              ? FontWeight.bold
+                                              : FontWeight.normal,
+                                            color: _selectedType == 'expense'
+                                              ? AppTheme.expenseColor
+                                              : Colors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedType = 'income';
+                                    });
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: _selectedType == 'income'
+                                        ? AppTheme.incomeLightColor
+                                        : Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: _selectedType == 'income'
+                                          ? AppTheme.incomeColor
+                                          : Colors.grey.shade300,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Icon(
+                                          Icons.attach_money,
+                                          color: _selectedType == 'income'
+                                            ? AppTheme.incomeColor
+                                            : Colors.grey,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Pemasukan',
+                                          style: TextStyle(
+                                            fontWeight: _selectedType == 'income'
+                                              ? FontWeight.bold
+                                              : FontWeight.normal,
+                                            color: _selectedType == 'income'
+                                              ? AppTheme.incomeColor
+                                              : Colors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 16),
 
                     // Category selection
-                    const Text(
-                      'Kategori',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(8),
+                        color: AppTheme.cardColor,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.1),
+                            spreadRadius: 1,
+                            blurRadius: 5,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      child: DropdownButton<String>(
-                        isExpanded: true,
-                        value: _selectedCategory,
-                        hint: const Text('Pilih kategori'),
-                        onChanged: (String? newValue) {
-                          setState(() {
-                            _selectedCategory = newValue;
-                          });
-                        },
-                        items: categoryProvider.categories
-                            .map<DropdownMenuItem<String>>((cat) {
-                          return DropdownMenuItem<String>(
-                            value: cat.id.toString(),
-                            child: Text(cat.name),
-                          );
-                        }).toList(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Kategori',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textColor,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              value: _selectedCategory,
+                              hint: const Text('Pilih kategori'),
+                              underline: Container(),
+                              onChanged: (String? newValue) {
+                                setState(() {
+                                  _selectedCategory = newValue;
+                                });
+                              },
+                              items: categoryProvider.categories
+                                  .map<DropdownMenuItem<String>>((cat) {
+                                return DropdownMenuItem<String>(
+                                  value: cat.id.toString(),
+                                  child: Text(cat.name),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 16),
 
                     // Amount input
-                    const Text(
-                      'Jumlah',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
                     Container(
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.cardColor,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
@@ -177,44 +287,49 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                           ),
                         ],
                       ),
-                      child: TextFormField(
-                        controller: _amountController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: const InputDecoration(
-                          labelText: 'Jumlah',
-                          prefixIcon: Icon(Icons.currency_rupee),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(12)),
-                            borderSide: BorderSide.none,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Jumlah',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textColor,
+                            ),
                           ),
-                          filled: true,
-                          fillColor: Colors.transparent,
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Harap masukkan jumlah';
-                          }
-                          if (double.tryParse(value) == null) {
-                            return 'Harap masukkan angka yang valid';
-                          }
-                          return null;
-                        },
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _amountController,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            decoration: const InputDecoration(
+                              hintText: 'Masukkan jumlah',
+                              prefixIcon: Icon(Icons.currency_rupee),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(8)),
+                              ),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Harap masukkan jumlah';
+                              }
+                              if (double.tryParse(value) == null) {
+                                return 'Harap masukkan angka yang valid';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 16),
 
                     // Date input
-                    const Text(
-                      'Tanggal',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
                     Container(
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.cardColor,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
@@ -225,49 +340,54 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                           ),
                         ],
                       ),
-                      child: TextFormField(
-                        controller: _dateController,
-                        readOnly: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Pilih Tanggal',
-                          prefixIcon: Icon(Icons.calendar_today),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(12)),
-                            borderSide: BorderSide.none,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Tanggal',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textColor,
+                            ),
                           ),
-                          filled: true,
-                          fillColor: Colors.transparent,
-                        ),
-                        onTap: () async {
-                          DateTime? pickedDate = await showDatePicker(
-                            context: context,
-                            initialDate: _selectedDate,
-                            firstDate: DateTime(2000),
-                            lastDate: DateTime(2101),
-                          );
-                          if (pickedDate != null) {
-                            setState(() {
-                              _selectedDate = pickedDate;
-                              _dateController.text = DateFormat('yyyy-MM-dd').format(pickedDate);
-                            });
-                          }
-                        },
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _dateController,
+                            readOnly: true,
+                            decoration: const InputDecoration(
+                              hintText: 'Pilih tanggal',
+                              prefixIcon: Icon(Icons.calendar_today),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(8)),
+                              ),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            ),
+                            onTap: () async {
+                              DateTime? pickedDate = await showDatePicker(
+                                context: context,
+                                initialDate: _selectedDate,
+                                firstDate: DateTime(2000),
+                                lastDate: DateTime(2101),
+                              );
+                              if (pickedDate != null) {
+                                setState(() {
+                                  _selectedDate = pickedDate;
+                                  _dateController.text = DateFormat('yyyy-MM-dd').format(pickedDate);
+                                });
+                              }
+                            },
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 16),
 
                     // Description input
-                    const Text(
-                      'Deskripsi',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
                     Container(
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.cardColor,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
@@ -278,23 +398,34 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                           ),
                         ],
                       ),
-                      child: TextFormField(
-                        controller: _descriptionController,
-                        maxLines: 3,
-                        decoration: const InputDecoration(
-                          labelText: 'Deskripsi (Opsional)',
-                          prefixIcon: Icon(Icons.description),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(12)),
-                            borderSide: BorderSide.none,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Deskripsi',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textColor,
+                            ),
                           ),
-                          filled: true,
-                          fillColor: Colors.transparent,
-                        ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _descriptionController,
+                            maxLines: 3,
+                            decoration: const InputDecoration(
+                              hintText: 'Tambahkan deskripsi (opsional)',
+                              prefixIcon: Icon(Icons.description),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(8)),
+                              ),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 16),
-
+                    const SizedBox(height: 24),
 
                     // Save button
                     SizedBox(
@@ -377,12 +508,13 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).primaryColor,
+                          backgroundColor: AppTheme.primaryColor,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                           elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                         child: Text(
                           widget.transaction != null ? 'Perbarui Transaksi' : 'Tambah Transaksi',

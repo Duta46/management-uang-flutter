@@ -5,12 +5,12 @@ class Transaction {
   final int? id;
   final int? userId;
   final int? categoryId;
-  final String amount;
+  final double amount;
   final String type; // 'income' or 'expense'
   final String? description;
-  final String? date;
-  final String? createdAt;
-  final String? updatedAt;
+  final DateTime? date;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
   final CategoryModel.Category? category;
 
   Transaction({
@@ -32,12 +32,18 @@ class Transaction {
         id: _parseId(json['id']),
         userId: _parseId(json['user_id']),
         categoryId: _parseId(json['category_id']),
-        amount: json['amount']?.toString() ?? '0',
+        amount: double.tryParse(json['amount']?.toString() ?? '0') ?? 0.0,
         type: json['type']?.toString() ?? '',
         description: json['description']?.toString(),
-        date: json['date']?.toString(),
-        createdAt: json['created_at']?.toString(),
-        updatedAt: json['updated_at']?.toString(),
+        date: json['date'] != null
+            ? DateTime.parse(json['date']).toLocal()
+            : null,
+        createdAt: json['created_at'] != null
+            ? DateTime.parse(json['created_at']).toLocal()
+            : null,
+        updatedAt: json['updated_at'] != null
+            ? DateTime.parse(json['updated_at']).toLocal()
+            : null,
         category: json['category'] != null && json['category'] is Map<String, dynamic>
             ? CategoryModel.Category.fromJson(json['category'])
             : null,
@@ -68,9 +74,9 @@ class Transaction {
       'amount': amount,
       'type': type,
       'description': description,
-      'date': date,
-      'created_at': createdAt,
-      'updated_at': updatedAt,
+      'date': date?.toIso8601String(),
+      'created_at': createdAt?.toIso8601String(),
+      'updated_at': updatedAt?.toIso8601String(),
     };
   }
 }

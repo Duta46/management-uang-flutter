@@ -165,10 +165,11 @@ class ChartWidgets {
                       bottomTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
-                          getTitlesWidget: (value, _) {
+                          getTitlesWidget: (value, meta) {
                             int index = value.toInt();
                             if (index >= 0 && index < monthShortNames.length) {
                               return SideTitleWidget(
+                                meta: meta,
                                 axisSide: AxisSide.bottom,
                                 child: Text(monthShortNames[index]),
                               );

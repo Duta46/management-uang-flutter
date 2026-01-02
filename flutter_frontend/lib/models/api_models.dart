@@ -135,6 +135,9 @@ class Transaction {
   });
 
   factory Transaction.fromJson(Map<String, dynamic> json) {
+    String? parsedDate = _parseValueAsString(json['date']);
+    String? localDate = parsedDate != null ? DateTime.parse(parsedDate).toLocal().toIso8601String() : null;
+
     return Transaction(
       id: _parseValueAsInt(json['id']),
       userId: _parseValueAsInt(json['user_id']),
@@ -142,7 +145,7 @@ class Transaction {
       amount: _parseValueAsString(json['amount']) ?? '0',
       type: _parseValueAsString(json['type']) ?? '',
       description: _parseValueAsString(json['description']),
-      date: _parseValueAsString(json['date']),
+      date: localDate,
       createdAt: _parseValueAsString(json['created_at']),
       updatedAt: _parseValueAsString(json['updated_at']),
       category: json['category'] != null
@@ -174,6 +177,18 @@ class Transaction {
       print("Error parsing string value in Transaction: $e");
       return null;
     }
+  }
+
+  DateTime? get localDate {
+    if (date != null) {
+      try {
+        return DateTime.parse(date!).toLocal();
+      } catch (e) {
+        print("Error parsing date: $e");
+        return null;
+      }
+    }
+    return null;
   }
 
   Map<String, dynamic> toJson() {

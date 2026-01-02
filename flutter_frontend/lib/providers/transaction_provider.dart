@@ -39,18 +39,51 @@ class TransactionProvider extends ChangeNotifier {
   double get totalIncome {
     return _transactions
         .where((transaction) => transaction.type == 'income')
-        .map((transaction) => double.tryParse(transaction.amount) ?? 0)
+        .map((transaction) => transaction.amount)
         .fold(0.0, (prev, amount) => prev + amount);
   }
 
   double get totalExpense {
     return _transactions
         .where((transaction) => transaction.type == 'expense')
-        .map((transaction) => double.tryParse(transaction.amount) ?? 0)
+        .map((transaction) => transaction.amount)
         .fold(0.0, (prev, amount) => prev + amount);
   }
 
   double get balance {
     return totalIncome - totalExpense;
+  }
+
+  // Get monthly transactions for specific month and year
+  List<Transaction> getMonthlyTransactions(int month, int year) {
+    return _transactions.where((transaction) {
+      if (transaction.date == null) return false;
+      final transactionDate = transaction.date!;
+      final matches = transactionDate.year == year && transactionDate.month == month;
+      // Debug log
+      // print("Transaction date: ${transaction.date}, Local date: $transactionDate, Matches: $matches, Filter: year=$year, month=$month");
+      return matches;
+    }).toList();
+  }
+
+  // Get monthly income for specific month and year
+  double getMonthlyIncome(int month, int year) {
+    return getMonthlyTransactions(month, year)
+        .where((transaction) => transaction.type == 'income')
+        .map((transaction) => transaction.amount)
+        .fold(0.0, (prev, amount) => prev + amount);
+  }
+
+  // Get monthly expense for specific month and year
+  double getMonthlyExpense(int month, int year) {
+    return getMonthlyTransactions(month, year)
+        .where((transaction) => transaction.type == 'expense')
+        .map((transaction) => transaction.amount)
+        .fold(0.0, (prev, amount) => prev + amount);
+  }
+
+  // Get monthly balance for specific month and year
+  double getMonthlyBalance(int month, int year) {
+    return getMonthlyIncome(month, year) - getMonthlyExpense(month, year);
   }
 }

@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../home/home_screen.dart';
 import '../categories/category_list_screen.dart';
 import '../transactions/transaction_list_screen.dart';
+import '../transaction_chart_screen.dart';
+import '../ai_insights_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({Key? key}) : super(key: key);
@@ -18,6 +20,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     const HomeScreen(),
     const TransactionListScreen(),
     const CategoryListScreen(),
+    const TransactionChartScreen(),
+    const AiInsightsScreen(),
   ];
 
   @override
@@ -47,6 +51,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.category),
             label: 'Kategori',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart),
+            label: 'Grafik',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.psychology),
+            label: 'AI Insight',
           ),
         ],
       ),

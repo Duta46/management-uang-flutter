@@ -111,14 +111,14 @@ class MonthlyComparisonChart extends StatelessWidget {
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        getTitlesWidget: (value, _) {
+                        getTitlesWidget: (value, meta) {
                           // Menampilkan nama bulan di bawah
                           final monthIndex = value.toInt();
                           if (monthIndex >= 0 && monthIndex < 12) {
                             final monthName = DateFormat('MMM').format(DateTime(0, monthIndex + 1));
 
                             return SideTitleWidget(
-                              axisSide: AxisSide.bottom,
+                              meta: meta,
                               space: 4,
                               child: RotatedBox(
                                 quarterTurns: -45, // Rotasi teks agar tidak terlalu panjang
@@ -129,8 +129,8 @@ class MonthlyComparisonChart extends StatelessWidget {
                               ),
                             );
                           }
-                          return const SideTitleWidget(
-                            axisSide: AxisSide.bottom,
+                          return SideTitleWidget(
+                            meta: meta,
                             child: Text(''),
                           );
                         },
@@ -139,9 +139,9 @@ class MonthlyComparisonChart extends StatelessWidget {
                     leftTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        getTitlesWidget: (value, _) {
+                        getTitlesWidget: (value, meta) {
                           return SideTitleWidget(
-                            axisSide: AxisSide.left,
+                            meta: meta,
                             space: 4,
                             child: Text(
                               'Rp${(value ~/ 1000000)}M', // Format dalam jutaan
@@ -328,18 +328,17 @@ class MonthlyComparisonChart extends StatelessWidget {
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        getTitlesWidget: (value, _) {
+                        getTitlesWidget: (value, meta) {
                           final yearIndex = value.toInt();
                           if (yearIndex >= 0 && yearIndex < sortedYears.length) {
                             final year = sortedYears[yearIndex];
                             return SideTitleWidget(
-                              axisSide: AxisSide.bottom,
+                              meta: meta,
                               space: 4,
                               child: Text('$year'),
                             );
                           }
-                          return const SideTitleWidget(
-                            axisSide: AxisSide.bottom,
+                          return SideTitleWidget(
                             child: Text(''),
                           );
                         },
@@ -348,9 +347,9 @@ class MonthlyComparisonChart extends StatelessWidget {
                     leftTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        getTitlesWidget: (value, _) {
+                        getTitlesWidget: (value, meta) {
                           return SideTitleWidget(
-                            axisSide: AxisSide.left,
+                            meta: meta,
                             space: 4,
                             child: Text(
                               'Rp${(value ~/ 1000000)}M',
