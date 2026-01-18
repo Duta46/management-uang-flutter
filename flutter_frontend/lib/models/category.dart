@@ -2,21 +2,22 @@ import 'package:flutter/foundation.dart';
 
 class Category {
   final int? id;
-  final int? userId;
   final String name;
+  final bool? isGlobal;
 
   Category({
     this.id,
-    this.userId,
     required this.name,
+    this.isGlobal,
   });
 
   factory Category.fromJson(Map<String, dynamic> json) {
     try {
       return Category(
         id: _parseId(json['id']),
-        userId: _parseId(json['user_id']),
         name: json['name']?.toString() ?? 'Unknown',
+        // isGlobal field has been removed from the database
+        isGlobal: null,
       );
     } catch (e, stackTrace) {
       print('Error parsing Category from JSON: $e');
@@ -39,8 +40,8 @@ class Category {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'user_id': userId,
       'name': name,
+      'is_global': isGlobal,
     };
   }
 }

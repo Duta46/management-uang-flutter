@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/transaction_provider_change_notifier.dart';
 import '../models/transaction.dart';
+import '../theme/app_theme.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
   const TransactionHistoryScreen({Key? key}) : super(key: key);
@@ -12,44 +13,67 @@ class TransactionHistoryScreen extends StatefulWidget {
 
 class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<TransactionProvider>(context, listen: false).fetchTransactions();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final transactionProvider = Provider.of<TransactionProvider>(context);
-    final transactions = transactionProvider.transactions;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Transaction History'),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.primaryColor,
+                AppTheme.primaryDarkColor,
+              ],
+            ),
+          ),
+        ),
+        foregroundColor: Colors.white,
+        elevation: 0,
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          Provider.of<TransactionProvider>(context, listen: false).fetchTransactions();
+      body: Consumer<TransactionProvider>(
+        builder: (context, transactionProvider, child) {
+          // Load transactions when screen is first built
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!transactionProvider.hasFetched) {
+              transactionProvider.fetchTransactions();
+            }
+          });
+
+          if (transactionProvider.isLoading && transactionProvider.transactions.isEmpty) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          final transactions = transactionProvider.transactions;
+
+          return RefreshIndicator(
+            onRefresh: () async {
+              transactionProvider.fetchTransactions();
+            },
+            child: transactions.isEmpty
+                ? const Center(
+                    child: Text('No transactions yet'),
+                  )
+                : ListView.builder(
+                    itemCount: transactions.length,
+                    itemBuilder: (context, index) {
+                      final transaction = transactions[index];
+                      return _buildTransactionCard(transaction);
+                    },
+                  ),
+          );
         },
-        child: transactions.isEmpty
-            ? const Center(
-                child: Text('No transactions yet'),
-              )
-            : ListView.builder(
-                itemCount: transactions.length,
-                itemBuilder: (context, index) {
-                  final transaction = transactions[index];
-                  return _buildTransactionCard(transaction);
-                },
-              ),
       ),
     );
   }
 
   Widget _buildTransactionCard(Transaction transaction) {
     final isIncome = transaction.type == 'income';
-    final amountColor = isIncome ? Colors.green : Colors.red;
+    final amountColor = isIncome ? AppTheme.incomeColor : AppTheme.expenseColor;
+    final backgroundColor = isIncome ? AppTheme.incomeLightColor : AppTheme.expenseLightColor;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -59,7 +83,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: isIncome ? Colors.green.shade100 : Colors.red.shade100,
+            color: backgroundColor,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
@@ -76,12 +100,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           children: [
             Text(
               transaction.category?.name ?? 'Uncategorized',
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              style: const TextStyle(fontSize: 12, color: AppTheme.textSecondaryColor),
             ),
             const SizedBox(height: 4),
             Text(
               transaction.date ?? '',
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              style: const TextStyle(fontSize: 12, color: AppTheme.textSecondaryColor),
             ),
           ],
         ),

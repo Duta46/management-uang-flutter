@@ -1,129 +1,179 @@
 import 'package:flutter/material.dart';
-import '../utils/error_handler.dart';
 
+/// A reusable error display widget for showing error messages to users
 class ErrorDisplay extends StatelessWidget {
-  final AppError error;
+  final String message;
+  final String? additionalMessage;
   final VoidCallback? onRetry;
-  final bool showDetails;
+  final IconData icon;
+  final Color iconColor;
+  final bool showRetryButton;
 
   const ErrorDisplay({
     Key? key,
-    required this.error,
+    required this.message,
+    this.additionalMessage,
     this.onRetry,
-    this.showDetails = false,
+    this.icon = Icons.error_outline,
+    this.iconColor = Colors.red,
+    this.showRetryButton = true,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 64,
+              color: iconColor,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: iconColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            if (additionalMessage != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                additionalMessage!,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey[600],
+                    ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+            if (showRetryButton && onRetry != null) ...[
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: onRetry,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+                child: const Text('Coba Lagi'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A loading indicator with optional error message
+class LoadingIndicator extends StatelessWidget {
+  final String? message;
+  final bool isError;
+  final String? errorMessage;
+  final VoidCallback? onRetry;
+
+  const LoadingIndicator({
+    Key? key,
+    this.message = 'Memuat...',
+    this.isError = false,
+    this.errorMessage,
+    this.onRetry,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    if (isError) {
+      return ErrorDisplay(
+        message: errorMessage ?? 'Terjadi kesalahan',
+        onRetry: onRetry,
+      );
+    }
+
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 64,
-            color: Theme.of(context).colorScheme.error,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            _getErrorMessage(),
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.error,
-                ),
-            textAlign: TextAlign.center,
-          ),
-          if (showDetails) ...[
-            const SizedBox(height: 8),
-            Text(
-              error.type,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
-          if (onRetry != null) ...[
+          const CircularProgressIndicator(),
+          if (message != null) ...[
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: onRetry,
-              child: const Text('Coba Lagi'),
+            Text(
+              message!,
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],
         ],
       ),
     );
   }
-
-  String _getErrorMessage() {
-    switch (error.type) {
-      case 'UNAUTHORIZED':
-        return 'Akses ditolak. Silakan login kembali.';
-      case 'NETWORK_ERROR':
-      case 'CONNECTION_ERROR':
-        return 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
-      case 'TIMEOUT_ERROR':
-      case 'CONNECTION_TIMEOUT':
-        return 'Waktu permintaan habis. Silakan coba lagi.';
-      case 'NOT_FOUND':
-        return 'Data tidak ditemukan.';
-      case 'SERVER_ERROR':
-        return 'Terjadi kesalahan server. Silakan coba lagi nanti.';
-      case 'VALIDATION_ERROR':
-        return 'Data tidak valid. Silakan periksa kembali inputan Anda.';
-      case 'BAD_REQUEST':
-        return 'Permintaan tidak valid. Silakan periksa data yang dimasukkan.';
-      default:
-        return error.message;
-    }
-  }
 }
 
-class DetailedErrorDialog extends StatelessWidget {
-  final AppError error;
+/// A widget that handles displaying content, loading state, or error state
+class StatefulView<T> extends StatelessWidget {
+  final AsyncSnapshot<T> snapshot;
+  final Widget Function(T data) builder;
+  final String? loadingMessage;
+  final String? emptyMessage;
+  final Widget? emptyWidget;
+  final bool showEmptyAsError;
 
-  const DetailedErrorDialog({
+  const StatefulView({
     Key? key,
-    required this.error,
+    required this.snapshot,
+    required this.builder,
+    this.loadingMessage,
+    this.emptyMessage,
+    this.emptyWidget,
+    this.showEmptyAsError = false,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Detail Kesalahan'),
-      content: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Jenis: ${error.type}'),
-            const SizedBox(height: 8),
-            Text('Pesan: ${error.message}'),
-            const SizedBox(height: 8),
-            if (error.originalError != null)
-              Text('Error Asli: ${error.originalError}'),
-            const SizedBox(height: 8),
-            if (error.stackTrace != null) ...[
-              const Text('Stack Trace:'),
-              Container(
-                width: double.maxFinite,
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  error.stackTrace.toString(),
-                  style: const TextStyle(fontSize: 12),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Tutup'),
-        ),
-      ],
-    );
+    switch (snapshot.connectionState) {
+      case ConnectionState.waiting:
+      case ConnectionState.none:
+        return LoadingIndicator(message: loadingMessage);
+      case ConnectionState.active:
+      case ConnectionState.done:
+        if (snapshot.hasError) {
+          return ErrorDisplay(
+            message: 'Terjadi Kesalahan',
+            additionalMessage: snapshot.error.toString(),
+            onRetry: () => {},
+          );
+        }
+
+        if (snapshot.hasData) {
+          final data = snapshot.data;
+          
+          // Check if data is a list and is empty
+          if (data is List && data.isEmpty) {
+            if (showEmptyAsError) {
+              return ErrorDisplay(
+                message: emptyMessage ?? 'Data kosong',
+                icon: Icons.info_outline,
+                iconColor: Colors.blue,
+                showRetryButton: false,
+              );
+            } else {
+              return emptyWidget ?? 
+                  Center(
+                    child: Text(emptyMessage ?? 'Tidak ada data'),
+                  );
+            }
+          }
+          
+          return builder(snapshot.data as T);
+        } else {
+          return ErrorDisplay(
+            message: 'Tidak ada data',
+            icon: Icons.info_outline,
+            iconColor: Colors.blue,
+            showRetryButton: false,
+          );
+        }
+    }
   }
 }

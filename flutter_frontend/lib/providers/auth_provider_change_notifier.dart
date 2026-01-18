@@ -60,6 +60,7 @@ class AuthProvider extends ChangeNotifier {
             name: userData['name'],
             email: userData['email'],
             token: token,
+            profilePhoto: userData['profile_photo'],
           );
 
           await _authService.saveUser(user);
@@ -116,6 +117,7 @@ class AuthProvider extends ChangeNotifier {
             name: userData['name'],
             email: userData['email'],
             token: token,
+            profilePhoto: userData['profile_photo'],
           );
 
           await _authService.saveUser(user);
@@ -173,5 +175,77 @@ class AuthProvider extends ChangeNotifier {
       print("AuthProvider: No user token found in storage"); // Debug log
     }
     notifyListeners();
+  }
+
+  Future<bool> updateProfileWithPhoto({String? name, String? email, dynamic profileImage}) async {
+    setLoading(true);
+    setErrorMessage(null);
+
+    try {
+      final response = await _apiRepository.updateProfileWithPhoto(
+        name: name,
+        email: email,
+        profileImage: profileImage,
+      );
+
+      if (response.success && response.data != null) {
+        final userData = response.data!['user'];
+
+        // Update current user data
+        _currentUser = User(
+          id: _currentUser?.id,
+          name: userData['name'] ?? _currentUser?.name ?? '',
+          email: userData['email'] ?? _currentUser?.email ?? '',
+          token: _currentUser?.token ?? '',
+          profilePhoto: userData['profile_photo'] ?? _currentUser?.profilePhoto, // Maintain the roles
+        );
+
+        // Save updated user to storage
+        await _authService.saveUser(_currentUser!);
+
+        setMessage('Profil berhasil diperbarui');
+        setLoading(false);
+        notifyListeners();
+        return true;
+      } else {
+        setErrorMessage(response.message ?? 'Gagal memperbarui profil');
+        setLoading(false);
+        return false;
+      }
+    } catch (e) {
+      setErrorMessage(e.toString());
+      setLoading(false);
+      return false;
+    }
+  }
+
+  Future<bool> refreshUserProfile() async {
+    try {
+      final response = await _apiRepository.getProfile();
+
+      if (response.success && response.data != null) {
+        final userData = response.data!['user'];
+
+        _currentUser = User(
+          id: userData['id'],
+          name: userData['name'] ?? _currentUser?.name ?? '',
+          email: userData['email'] ?? _currentUser?.email ?? '',
+          token: _currentUser?.token ?? '',
+          profilePhoto: userData['profile_photo'] ?? _currentUser?.profilePhoto,
+        );
+
+        await _authService.saveUser(_currentUser!);
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print("Error refreshing user profile: $e");
+      return false;
+    }
+  }
+
+  Future<bool> fetchUserProfile() async {
+    return await refreshUserProfile();
   }
 }

@@ -91,9 +91,9 @@ class CategoryProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> createCategory(String name) async {
+  Future<bool> buatKategori(String name, {bool isGlobal = false}) async {
     try {
-      final Response.ApiResponse response = await _apiRepository.addCategory(name);
+      final Response.ApiResponse response = await _apiRepository.addCategory(name, isGlobal: isGlobal);
 
       if (response.success) {
         await fetchCategories(); // Refresh the list
@@ -109,7 +109,7 @@ class CategoryProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> updateCategory(int id, String name) async {
+  Future<bool> perbaruiKategori(int id, String name) async {
     try {
       final Response.ApiResponse response = await _apiRepository.updateCategory(id, name);
 
@@ -127,7 +127,7 @@ class CategoryProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> deleteCategory(int id) async {
+  Future<bool> hapusKategori(int id) async {
     try {
       final Response.ApiResponse response = await _apiRepository.deleteCategory(id);
 

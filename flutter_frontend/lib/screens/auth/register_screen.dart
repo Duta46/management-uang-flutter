@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider_change_notifier.dart';
+import '../../theme/app_theme.dart';
 import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -23,7 +24,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: AppTheme.backgroundColor,
+      appBar: AppBar(
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.primaryColor,
+                AppTheme.primaryDarkColor,
+              ],
+            ),
+          ),
+        ),
+        automaticallyImplyLeading: false,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Container(
@@ -35,7 +51,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppTheme.cardColor,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -47,9 +63,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ],
                   ),
                   child: Icon(
-                    Icons.person_add,
+                    Icons.account_balance_wallet,
                     size: 100,
-                    color: Theme.of(context).primaryColor,
+                    color: AppTheme.primaryColor,
                   ),
                 ),
                 const SizedBox(height: 40),
@@ -59,12 +75,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   'Buat Akun',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
+                        color: AppTheme.textColor,
                       ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Daftar untuk mulai mengelola keuangan Anda',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppTheme.textSecondaryColor,
+                      ),
                 ),
                 const SizedBox(height: 40),
 
@@ -76,7 +95,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       // Name field
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppTheme.cardColor,
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
@@ -114,7 +133,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       // Email field
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppTheme.cardColor,
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
@@ -157,7 +176,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       // Password field
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppTheme.cardColor,
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
@@ -211,7 +230,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       // Confirm Password field
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppTheme.cardColor,
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
@@ -273,7 +292,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   ? null
                                   : () => _performRegister(authProvider),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context).primaryColor,
+                                backgroundColor: AppTheme.primaryColor,
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -309,7 +328,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         children: [
                           Text(
                             'Sudah punya akun?',
-                            style: Theme.of(context).textTheme.bodyMedium,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: AppTheme.textSecondaryColor,
+                                ),
                           ),
                           TextButton(
                             onPressed: () {
@@ -323,7 +344,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             child: Text(
                               'Masuk',
                               style: TextStyle(
-                                color: Theme.of(context).primaryColor,
+                                color: AppTheme.primaryColor,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -370,7 +391,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(authProvider.message ?? 'Pendaftaran gagal'),
-                backgroundColor: Colors.red,
+                backgroundColor: AppTheme.expenseColor,
               ),
             );
           }
@@ -380,7 +401,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Registration failed: $e'),
-              backgroundColor: Colors.red,
+              backgroundColor: AppTheme.expenseColor,
             ),
           );
         }

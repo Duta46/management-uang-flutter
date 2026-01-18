@@ -80,15 +80,16 @@ A Laravel-based REST API for personal finance tracking with user authentication 
 | PUT | `/api/budgets/{id}` | Update specific budget |
 | DELETE | `/api/budgets/{id}` | Delete specific budget |
 
-### Savings
+### Savings Goals
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/savings` | Get user's savings (paginated) |
-| POST | `/api/savings` | Create new saving |
-| GET | `/api/savings/{id}` | Get specific saving |
-| PUT | `/api/savings/{id}` | Update specific saving |
-| DELETE | `/api/savings/{id}` | Delete specific saving |
+| GET | `/api/savings-goals` | Get user's savings goals (paginated) |
+| POST | `/api/savings-goals` | Create new savings goal |
+| GET | `/api/savings-goals/{id}` | Get specific savings goal |
+| PUT | `/api/savings-goals/{id}` | Update specific savings goal |
+| DELETE | `/api/savings-goals/{id}` | Delete specific savings goal |
+| GET | `/api/savings-goals-with-status` | Get user's savings goals with status and progress |
 
 ### Admin Endpoints
 
@@ -129,7 +130,7 @@ A Laravel-based REST API for personal finance tracking with user authentication 
 
 ### Register a new user
 ```bash
-curl -X POST https://note-grill-spencer-non.trycloudflare.com/api/register \
+curl -X POST https://each-commented-poet-compounds.trycloudflare.com/api/register \
   -H "Content-Type: application/json" \
   -d '{
     "name": "John Doe",
@@ -141,7 +142,7 @@ curl -X POST https://note-grill-spencer-non.trycloudflare.com/api/register \
 
 ### Login
 ```bash
-curl -X POST https://note-grill-spencer-non.trycloudflare.com/api/login \
+curl -X POST https://each-commented-poet-compounds.trycloudflare.com/api/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "john@example.com",
@@ -151,7 +152,7 @@ curl -X POST https://note-grill-spencer-non.trycloudflare.com/api/login \
 
 ### Create a category (with authentication token)
 ```bash
-curl -X POST https://note-grill-spencer-non.trycloudflare.com/api/categories \
+curl -X POST https://each-commented-poet-compounds.trycloudflare.com/api/categories \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -d '{

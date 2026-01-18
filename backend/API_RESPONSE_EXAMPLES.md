@@ -87,7 +87,7 @@
       "total": 1
     }
   },
-  "message": "Categories retrieved successfully."
+  "message": "Kategori berhasil diambil."
 }
 ```
 

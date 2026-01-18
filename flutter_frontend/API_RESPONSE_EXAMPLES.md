@@ -72,8 +72,8 @@
       }
     ],
     "links": {
-      "first": "https://note-grill-spencer-non.trycloudflare.com/api/categories?page=1",
-      "last": "https://note-grill-spencer-non.trycloudflare.com/api/categories?page=1",
+      "first": "https://each-commented-poet-compounds.trycloudflare.com/api/categories?page=1",
+      "last": "https://each-commented-poet-compounds.trycloudflare.com/api/categories?page=1",
       "prev": null,
       "next": null
     },
@@ -81,7 +81,7 @@
       "current_page": 1,
       "from": 1,
       "last_page": 1,
-      "path": "https://note-grill-spencer-non.trycloudflare.com/api/categories",
+      "path": "https://each-commented-poet-compounds.trycloudflare.com/api/categories",
       "per_page": 10,
       "to": 1,
       "total": 1
@@ -146,8 +146,8 @@
       }
     ],
     "links": {
-      "first": "https://note-grill-spencer-non.trycloudflare.com/api/transactions?page=1",
-      "last": "https://note-grill-spencer-non.trycloudflare.com/api/transactions?page=1",
+      "first": "https://each-commented-poet-compounds.trycloudflare.com/api/transactions?page=1",
+      "last": "https://each-commented-poet-compounds.trycloudflare.com/api/transactions?page=1",
       "prev": null,
       "next": null
     },
@@ -155,7 +155,7 @@
       "current_page": 1,
       "from": 1,
       "last_page": 1,
-      "path": "https://note-grill-spencer-non.trycloudflare.com/api/transactions",
+      "path": "https://each-commented-poet-compounds.trycloudflare.com/api/transactions",
       "per_page": 10,
       "to": 1,
       "total": 1
@@ -189,8 +189,8 @@
       }
     ],
     "links": {
-      "first": "https://note-grill-spencer-non.trycloudflare.com/api/budgets?page=1",
-      "last": "https://note-grill-spencer-non.trycloudflare.com/api/budgets?page=1",
+      "first": "https://each-commented-poet-compounds.trycloudflare.com/api/budgets?page=1",
+      "last": "https://each-commented-poet-compounds.trycloudflare.com/api/budgets?page=1",
       "prev": null,
       "next": null
     },
@@ -198,7 +198,7 @@
       "current_page": 1,
       "from": 1,
       "last_page": 1,
-      "path": "https://note-grill-spencer-non.trycloudflare.com/api/budgets",
+      "path": "https://each-commented-poet-compounds.trycloudflare.com/api/budgets",
       "per_page": 10,
       "to": 1,
       "total": 1
@@ -208,9 +208,9 @@
 }
 ```
 
-## Savings
+## Savings Goals
 
-### Get Savings Success
+### Get Savings Goals Success
 ```json
 {
   "success": true,
@@ -219,18 +219,22 @@
       {
         "id": 1,
         "user_id": 1,
-        "goal_name": "Emergency Fund",
+        "name": "Emergency Fund",
+        "description": "Building an emergency fund for unexpected expenses",
         "target_amount": "1000.00",
         "current_amount": "450.00",
-        "deadline": "2026-01-01",
+        "target_date": "2026-01-01",
+        "status": "active",
         "created_at": "2025-11-12T14:30:00.000000Z",
         "updated_at": "2025-11-12T14:30:00.000000Z",
-        "progress_percentage": 45.00
+        "progress_percentage": 45.00,
+        "days_remaining": 60,
+        "amount_needed": 550.00
       }
     ],
     "links": {
-      "first": "https://note-grill-spencer-non.trycloudflare.com/api/savings?page=1",
-      "last": "https://note-grill-spencer-non.trycloudflare.com/api/savings?page=1",
+      "first": "https://each-commented-poet-compounds.trycloudflare.com/api/savings-goals?page=1",
+      "last": "https://each-commented-poet-compounds.trycloudflare.com/api/savings-goals?page=1",
       "prev": null,
       "next": null
     },
@@ -238,13 +242,13 @@
       "current_page": 1,
       "from": 1,
       "last_page": 1,
-      "path": "https://note-grill-spencer-non.trycloudflare.com/api/savings",
+      "path": "https://each-commented-poet-compounds.trycloudflare.com/api/savings-goals",
       "per_page": 10,
       "to": 1,
       "total": 1
     }
   },
-  "message": "Savings retrieved successfully."
+  "message": "Savings goals retrieved successfully."
 }
 ```
 

@@ -18,41 +18,71 @@ class ReportController extends Controller
 
     public function daily(Request $request): JsonResponse
     {
-        $userId = auth()->id();
-        $date = $request->get('date', date('Y-m-d'));
-        
-        $transactions = $this->transactionService->getAllTransactions($userId, [
-            'start_date' => $date,
-            'end_date' => $date
-        ]);
+        try {
+            $user = $request->user();
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
 
-        return response()->json([
-            'success' => true,
-            'data' => $transactions,
-            'message' => 'Daily report retrieved successfully'
-        ]);
+            $userId = $user->id;
+            $date = $request->get('date', date('Y-m-d'));
+
+            $transactions = $this->transactionService->getAllTransactions($userId, [
+                'start_date' => $date,
+                'end_date' => $date
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $transactions,
+                'message' => 'Daily report retrieved successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while retrieving daily report: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function monthly(Request $request): JsonResponse
     {
-        $userId = auth()->id();
-        $month = $request->get('month', date('n')); // Current month if not provided
-        $year = $request->get('year', date('Y'));  // Current year if not provided
+        try {
+            $user = $request->user();
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
 
-        $transactions = $this->transactionService->getAllTransactions($userId, [
-            'start_date' => "$year-$month-01",
-            'end_date' => date("Y-m-t", mktime(0, 0, 0, $month, 1, $year))
-        ]);
+            $userId = $user->id;
+            $month = $request->get('month', date('n')); // Current month if not provided
+            $year = $request->get('year', date('Y'));  // Current year if not provided
 
-        $summary = $this->transactionService->getMonthlySummary($userId, $month, $year);
+            $transactions = $this->transactionService->getAllTransactions($userId, [
+                'start_date' => "$year-$month-01",
+                'end_date' => date("Y-m-t", mktime(0, 0, 0, $month, 1, $year))
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'transactions' => $transactions,
-                'summary' => $summary
-            ],
-            'message' => 'Monthly report retrieved successfully'
-        ]);
+            $summary = $this->transactionService->getMonthlySummary($userId, $month, $year);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'transactions' => $transactions,
+                    'summary' => $summary
+                ],
+                'message' => 'Monthly report retrieved successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while retrieving monthly report: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

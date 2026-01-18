@@ -7,13 +7,20 @@ use Illuminate\Database\Eloquent\Collection;
 
 class CategoryRepository implements CategoryRepositoryInterface
 {
+    public function getAllForUser(int $userId): Collection
+    {
+        // All users see only their own categories (no global categories anymore)
+        return Category::where('user_id', $userId)->get();
+    }
+
     public function getAll(int $userId): Collection
     {
-        return Category::where('user_id', $userId)->get();
+        return $this->getAllForUser($userId);
     }
 
     public function getById(int $id, int $userId): ?Category
     {
+        // All users can only access their own categories
         return Category::where('id', $id)
             ->where('user_id', $userId)
             ->first();
@@ -27,7 +34,7 @@ class CategoryRepository implements CategoryRepositoryInterface
     public function update(int $id, int $userId, array $data): ?Category
     {
         $category = $this->getById($id, $userId);
-        
+
         if ($category) {
             $category->update($data);
             return $category;
@@ -39,7 +46,7 @@ class CategoryRepository implements CategoryRepositoryInterface
     public function delete(int $id, int $userId): bool
     {
         $category = $this->getById($id, $userId);
-        
+
         if ($category) {
             return $category->delete();
         }

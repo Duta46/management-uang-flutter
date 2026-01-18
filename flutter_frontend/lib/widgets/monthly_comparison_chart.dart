@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../models/financial_summary.dart';
+import '../../theme/app_theme.dart';
 
 class MonthlyComparisonChart extends StatelessWidget {
   final List<FinancialSummary> financialData;
@@ -54,7 +55,7 @@ class MonthlyComparisonChart extends StatelessWidget {
             BarChartRodData(
               toY: monthData.totalIncome,
               width: 10,
-              color: Colors.green,
+              color: AppTheme.incomeColor,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(4),
                 topRight: Radius.circular(4),
@@ -64,7 +65,7 @@ class MonthlyComparisonChart extends StatelessWidget {
             BarChartRodData(
               toY: monthData.totalExpense,
               width: 10,
-              color: Colors.red,
+              color: AppTheme.expenseColor,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(4),
                 topRight: Radius.circular(4),
@@ -74,7 +75,7 @@ class MonthlyComparisonChart extends StatelessWidget {
             BarChartRodData(
               toY: monthData.totalSaving,
               width: 10,
-              color: Colors.blue,
+              color: AppTheme.primaryColor,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(4),
                 topRight: Radius.circular(4),
@@ -214,9 +215,9 @@ class MonthlyComparisonChart extends StatelessWidget {
             Wrap(
               spacing: 16,
               children: [
-                _buildLegendItem(Colors.green, 'Pemasukan'),
-                _buildLegendItem(Colors.red, 'Pengeluaran'),
-                _buildLegendItem(Colors.blue, 'Tabungan'),
+                _buildLegendItem(AppTheme.incomeColor, 'Pemasukan'),
+                _buildLegendItem(AppTheme.expenseColor, 'Pengeluaran'),
+                _buildLegendItem(AppTheme.primaryColor, 'Tabungan'),
               ],
             ),
           ],
@@ -271,7 +272,7 @@ class MonthlyComparisonChart extends StatelessWidget {
             BarChartRodData(
               toY: yearlySummary.totalIncome,
               width: 14,
-              color: Colors.green,
+              color: AppTheme.incomeColor,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(4),
                 topRight: Radius.circular(4),
@@ -281,7 +282,7 @@ class MonthlyComparisonChart extends StatelessWidget {
             BarChartRodData(
               toY: yearlySummary.totalExpense,
               width: 14,
-              color: Colors.red,
+              color: AppTheme.expenseColor,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(4),
                 topRight: Radius.circular(4),
@@ -291,7 +292,7 @@ class MonthlyComparisonChart extends StatelessWidget {
             BarChartRodData(
               toY: yearlySummary.totalSaving,
               width: 14,
-              color: Colors.blue,
+              color: AppTheme.primaryColor,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(4),
                 topRight: Radius.circular(4),
@@ -425,9 +426,9 @@ class MonthlyComparisonChart extends StatelessWidget {
             Wrap(
               spacing: 16,
               children: [
-                _buildLegendItem(Colors.green, 'Pemasukan'),
-                _buildLegendItem(Colors.red, 'Pengeluaran'),
-                _buildLegendItem(Colors.blue, 'Tabungan'),
+                _buildLegendItem(AppTheme.incomeColor, 'Pemasukan'),
+                _buildLegendItem(AppTheme.expenseColor, 'Pengeluaran'),
+                _buildLegendItem(AppTheme.primaryColor, 'Tabungan'),
               ],
             ),
           ],

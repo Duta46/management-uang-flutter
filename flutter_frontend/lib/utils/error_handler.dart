@@ -1,32 +1,115 @@
 import 'dart:io';
 import 'dart:async';
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 
-class AppError {
+/// Base exception class for the application
+abstract class AppException implements Exception {
   final String message;
-  final String type;
-  final dynamic originalError;
   final StackTrace? stackTrace;
-
-  AppError({
-    required this.message,
-    required this.type,
-    this.originalError,
-    this.stackTrace,
-  });
-
+  
+  AppException(this.message, [this.stackTrace]);
+  
   @override
-  String toString() {
-    return 'AppError{type: $type, message: $message, originalError: $originalError}';
-  }
+  String toString() => '$runtimeType($message)';
 }
 
-class ErrorHandler {
-  static AppError handle(dynamic error, StackTrace? stackTrace) {
-    print('Raw error: $error');
-    print('Stack trace: $stackTrace');
+/// Network-related exceptions
+class NetworkException extends AppException {
+  NetworkException(String message, [StackTrace? stackTrace]) : super(message, stackTrace);
+}
 
-    if (error is AppError) {
+class ConnectionTimeoutException extends NetworkException {
+  ConnectionTimeoutException([String message = 'Connection timeout', StackTrace? stackTrace]) 
+      : super(message, stackTrace);
+}
+
+class ReceiveTimeoutException extends NetworkException {
+  ReceiveTimeoutException([String message = 'Receive timeout', StackTrace? stackTrace]) 
+      : super(message, stackTrace);
+}
+
+class SendTimeoutException extends NetworkException {
+  SendTimeoutException([String message = 'Send timeout', StackTrace? stackTrace]) 
+      : super(message, stackTrace);
+}
+
+class BadRequestException extends NetworkException {
+  BadRequestException([String message = 'Bad request', StackTrace? stackTrace]) 
+      : super(message, stackTrace);
+}
+
+class UnauthorizedException extends NetworkException {
+  UnauthorizedException([String message = 'Unauthorized', StackTrace? stackTrace]) 
+      : super(message, stackTrace);
+}
+
+class ForbiddenException extends NetworkException {
+  ForbiddenException([String message = 'Forbidden', StackTrace? stackTrace]) 
+      : super(message, stackTrace);
+}
+
+class NotFoundException extends NetworkException {
+  NotFoundException([String message = 'Not found', StackTrace? stackTrace]) 
+      : super(message, stackTrace);
+}
+
+class ConflictException extends NetworkException {
+  ConflictException([String message = 'Conflict', StackTrace? stackTrace]) 
+      : super(message, stackTrace);
+}
+
+class InternalServerException extends NetworkException {
+  InternalServerException([String message = 'Internal server error', StackTrace? stackTrace]) 
+      : super(message, stackTrace);
+}
+
+class UnknownException extends NetworkException {
+  UnknownException([String message = 'Unknown error occurred', StackTrace? stackTrace]) 
+      : super(message, stackTrace);
+}
+
+class CancelledException extends NetworkException {
+  CancelledException([String message = 'Request cancelled', StackTrace? stackTrace]) 
+      : super(message, stackTrace);
+}
+
+/// Validation-related exceptions
+class ValidationException extends AppException {
+  final Map<String, List<String>>? fieldErrors;
+  
+  ValidationException(String message, {this.fieldErrors, StackTrace? stackTrace})
+      : super(message, stackTrace);
+}
+
+/// Data-related exceptions
+class DataParsingException extends AppException {
+  DataParsingException(String message, [StackTrace? stackTrace])
+      : super(message, stackTrace);
+}
+
+class EmptyDataException extends AppException {
+  EmptyDataException([String message = 'No data available', StackTrace? stackTrace])
+      : super(message, stackTrace);
+}
+
+/// Authentication-related exceptions
+class AuthenticationException extends AppException {
+  AuthenticationException(String message, [StackTrace? stackTrace])
+      : super(message, stackTrace);
+}
+
+/// Business logic exceptions
+class BusinessLogicException extends AppException {
+  BusinessLogicException(String message, [StackTrace? stackTrace])
+      : super(message, stackTrace);
+}
+
+/// Error handler utility class
+class ErrorHandler {
+  /// Handles different types of errors and converts them to appropriate AppException
+  static AppException handle(dynamic error, [StackTrace? stackTrace]) {
+    if (error is AppException) {
       return error;
     }
 
@@ -35,51 +118,49 @@ class ErrorHandler {
     }
 
     if (error is SocketException) {
-      return AppError(
-        message: 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.',
-        type: 'NETWORK_ERROR',
-        originalError: error,
-        stackTrace: stackTrace,
+      return NetworkException(
+        'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.',
+        stackTrace,
       );
     }
 
     if (error is FormatException) {
-      return AppError(
-        message: 'Format data tidak valid. Terjadi kesalahan dalam pengolahan data.',
-        type: 'FORMAT_ERROR',
-        originalError: error,
-        stackTrace: stackTrace,
+      return DataParsingException(
+        'Format data tidak valid. Terjadi kesalahan dalam pengolahan data.',
+        stackTrace,
       );
     }
 
     if (error is TimeoutException) {
-      return AppError(
-        message: 'Waktu permintaan habis. Silakan coba lagi.',
-        type: 'TIMEOUT_ERROR',
-        originalError: error,
-        stackTrace: stackTrace,
+      return ReceiveTimeoutException(
+        'Waktu permintaan habis. Silakan coba lagi.',
+        stackTrace,
       );
     }
 
     if (error is TypeError) {
-      return AppError(
-        message: 'Jenis data tidak sesuai. Terjadi kesalahan dalam pengolahan data.',
-        type: 'TYPE_ERROR',
-        originalError: error,
+      return DataParsingException(
+        'Jenis data tidak sesuai. Terjadi kesalahan dalam pengolahan data.',
+        stackTrace,
+      );
+    }
+
+    if (error is ArgumentError) {
+      return ValidationException(
+        'Argumen tidak valid: ${error.message}',
         stackTrace: stackTrace,
       );
     }
 
     // Default error
-    return AppError(
-      message: error.toString(),
-      type: 'UNKNOWN_ERROR',
-      originalError: error,
-      stackTrace: stackTrace,
+    return UnknownException(
+      error.toString(),
+      stackTrace,
     );
   }
 
-  static AppError _handleDioError(DioException error, StackTrace? stackTrace) {
+  /// Handles Dio-specific errors and maps them to appropriate exceptions
+  static AppException _handleDioError(DioException error, StackTrace? stackTrace) {
     String message = 'Terjadi kesalahan jaringan';
     String type = 'NETWORK_ERROR';
 
@@ -99,7 +180,7 @@ class ErrorHandler {
       case DioExceptionType.badResponse:
         int? statusCode = error.response?.statusCode;
         String? statusMessage = error.response?.statusMessage;
-        
+
         switch (statusCode) {
           case 400:
             message = 'Permintaan tidak valid. Silakan periksa data yang dimasukkan.';
@@ -148,28 +229,35 @@ class ErrorHandler {
         break;
     }
 
-    return AppError(
-      message: message,
-      type: type,
-      originalError: error,
-      stackTrace: stackTrace,
-    );
+    return UnknownException(message, stackTrace);
   }
 
-  static String getDetailedErrorMessage(AppError error) {
-    StringBuffer buffer = StringBuffer();
-    buffer.writeln('Error Type: ${error.type}');
-    buffer.writeln('Message: ${error.message}');
+  /// Shows error message to user using SnackBar
+  static void showErrorSnackBar(BuildContext context, AppException exception) {
+    String message = exception.message;
     
-    if (error.originalError != null) {
-      buffer.writeln('Original Error: ${error.originalError}');
+    // Customize message based on exception type
+    if (exception is UnauthorizedException) {
+      message = 'Sesi Anda telah habis. Silakan login kembali.';
+    } else if (exception is NetworkException) {
+      message = 'Gagal terhubung ke server. Periksa koneksi internet Anda.';
+    } else if (exception is ValidationException) {
+      message = 'Data tidak valid. Silakan periksa kembali inputan Anda.';
     }
     
-    if (error.stackTrace != null) {
-      buffer.writeln('Stack Trace:');
-      buffer.writeln(error.stackTrace);
-    }
-    
-    return buffer.toString();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+}
+
+/// Extension to easily convert errors to AppException
+extension ErrorExtension on Object {
+  AppException toAppException([StackTrace? stackTrace]) {
+    return ErrorHandler.handle(this, stackTrace);
   }
 }

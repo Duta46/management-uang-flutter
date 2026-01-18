@@ -1,10 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'category.dart' as CategoryModel;
+import 'bill_reminder.dart' as BillReminderModel;
+import 'savings_goal.dart' as SavingsGoalModel;
 
 class Transaction {
   final int? id;
   final int? userId;
   final int? categoryId;
+  final int? billReminderId;
+  final int? savingsGoalId;
   final double amount;
   final String type; // 'income' or 'expense'
   final String? description;
@@ -12,11 +16,15 @@ class Transaction {
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final CategoryModel.Category? category;
+  final BillReminderModel.BillReminder? billReminder;
+  final SavingsGoalModel.SavingsGoal? savingsGoal;
 
   Transaction({
     this.id,
     this.userId,
     this.categoryId,
+    this.billReminderId,
+    this.savingsGoalId,
     required this.amount,
     required this.type,
     this.description,
@@ -24,6 +32,8 @@ class Transaction {
     this.createdAt,
     this.updatedAt,
     this.category,
+    this.billReminder,
+    this.savingsGoal,
   });
 
   factory Transaction.fromJson(Map<String, dynamic> json) {
@@ -32,6 +42,8 @@ class Transaction {
         id: _parseId(json['id']),
         userId: _parseId(json['user_id']),
         categoryId: _parseId(json['category_id']),
+        billReminderId: _parseId(json['bill_reminder_id']),
+        savingsGoalId: _parseId(json['savings_goal_id']),
         amount: double.tryParse(json['amount']?.toString() ?? '0') ?? 0.0,
         type: json['type']?.toString() ?? '',
         description: json['description']?.toString(),
@@ -46,6 +58,12 @@ class Transaction {
             : null,
         category: json['category'] != null && json['category'] is Map<String, dynamic>
             ? CategoryModel.Category.fromJson(json['category'])
+            : null,
+        billReminder: json['bill_reminder'] != null && json['bill_reminder'] is Map<String, dynamic>
+            ? BillReminderModel.BillReminder.fromJson(json['bill_reminder'])
+            : null,
+        savingsGoal: json['savings_goal'] != null && json['savings_goal'] is Map<String, dynamic>
+            ? SavingsGoalModel.SavingsGoal.fromJson(json['savings_goal'])
             : null,
       );
     } catch (e, stackTrace) {
@@ -71,6 +89,8 @@ class Transaction {
       'id': id,
       'user_id': userId,
       'category_id': categoryId,
+      'bill_reminder_id': billReminderId,
+      'savings_goal_id': savingsGoalId,
       'amount': amount,
       'type': type,
       'description': description,

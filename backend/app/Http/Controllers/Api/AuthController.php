@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Models\User;
+use App\Services\DefaultCategoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,6 +21,11 @@ class AuthController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
+
+
+        // Create default categories for the new user
+        $defaultCategoryService = new DefaultCategoryService();
+        $defaultCategoryService->createDefaultCategories($user);
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -68,9 +74,11 @@ class AuthController extends Controller
 
     public function profile(Request $request): JsonResponse
     {
+        $user = $request->user();
+
         return response()->json([
             'success' => true,
-            'data' => $request->user(),
+            'data' => $user,
             'message' => 'Profile retrieved successfully',
         ]);
     }
@@ -80,10 +88,21 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|string|email|max:255|unique:users,email,' . $request->user()->id,
+            'profile_photo' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048', // max 2MB
         ]);
 
         $user = $request->user();
-        $user->update($request->only('name', 'email'));
+        $updateData = $request->only(['name', 'email']);
+
+        // Handle profile photo upload
+        if ($request->hasFile('profile_photo')) {
+            $image = $request->file('profile_photo');
+            $imageName = time() . '_' . $user->id . '.' . $image->getClientOriginalExtension();
+            $imagePath = $image->storeAs('profile-photos', $imageName, 'public');
+            $updateData['profile_photo'] = $imagePath;
+        }
+
+        $user->update($updateData);
 
         return response()->json([
             'success' => true,

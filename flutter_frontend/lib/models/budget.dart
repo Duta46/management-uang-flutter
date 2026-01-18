@@ -6,8 +6,11 @@ class Budget {
   final int? id;
   final int? userId;
   final int? categoryId;
+  final String? name;
   final String amount; // Using String to preserve decimal precision
+  final String? description;
   final String month; // Format: YYYY-MM
+  final String? spentAmount;
   final String? createdAt;
   final String? updatedAt;
   final CategoryModel.Category? category;
@@ -16,8 +19,11 @@ class Budget {
     this.id,
     this.userId,
     this.categoryId,
+    this.name,
     required this.amount,
+    this.description,
     required this.month,
+    this.spentAmount,
     this.createdAt,
     this.updatedAt,
     this.category,
@@ -28,8 +34,11 @@ class Budget {
       id: json['id'] as int?,
       userId: json['user_id'] as int?,
       categoryId: json['category_id'] as int?,
+      name: json['name'] as String?,
       amount: json['amount'] as String? ?? '',
+      description: json['description'] as String?,
       month: json['month'] as String? ?? '',
+      spentAmount: json['spent_amount'] as String?,
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
       category: json['category'] != null
@@ -43,8 +52,11 @@ class Budget {
       'id': id,
       'user_id': userId,
       'category_id': categoryId,
+      'name': name,
       'amount': amount,
+      'description': description,
       'month': month,
+      'spent_amount': spentAmount,
       'created_at': createdAt,
       'updated_at': updatedAt,
     };

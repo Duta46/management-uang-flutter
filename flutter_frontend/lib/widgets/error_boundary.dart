@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import '../utils/error_handler.dart';
-import '../widgets/error_display.dart';
 
 class ErrorBoundary extends StatefulWidget {
   final Widget child;
-  final Widget Function(AppError error, VoidCallback reset)? onError;
+  final Widget Function(Object error, VoidCallback reset)? onError;
 
   const ErrorBoundary({
     Key? key,
@@ -17,7 +15,7 @@ class ErrorBoundary extends StatefulWidget {
 }
 
 class _ErrorBoundaryState extends State<ErrorBoundary> {
-  AppError? _error;
+  Object? _error;
 
   void _reset() {
     setState(() {
@@ -31,10 +29,32 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
       if (widget.onError != null) {
         return widget.onError!(_error!, _reset);
       }
-      return ErrorDisplay(
-        error: _error!,
-        onRetry: _reset,
-        showDetails: true,
+      return Scaffold(
+        appBar: AppBar(title: const Text('Error')),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                size: 64,
+                color: Colors.red,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Terjadi kesalahan tak terduga',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text('$_error'),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _reset,
+                child: const Text('Coba Lagi'),
+              ),
+            ],
+          ),
+        ),
       );
     }
 

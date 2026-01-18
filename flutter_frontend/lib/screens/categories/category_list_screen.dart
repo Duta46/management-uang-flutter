@@ -1,162 +1,125 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_frontend/providers/category_provider_change_notifier.dart';
+import 'package:flutter_frontend/providers/auth_provider_change_notifier.dart';
 import '../../models/category.dart' as ModelCategory;
+import '../../theme/app_theme.dart';
 import 'category_form_screen.dart';
+import '../../widgets/category_item_card.dart';
 
 class CategoryListScreen extends StatelessWidget {
   const CategoryListScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kategori'),
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: Consumer<CategoryProvider>(
-        builder: (context, provider, child) {
-          // Load categories when screen is built
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            provider.fetchCategories();
-          });
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        return Scaffold(
+          backgroundColor: Theme.of(context).colorScheme.background,
+          appBar: AppBar(
+            backgroundColor: Theme.of(context).cardTheme.color,
+            foregroundColor: Theme.of(context).textTheme.titleLarge?.color,
+            elevation: 0,
+            title: const Text('Kategori'),
+            iconTheme: IconThemeData(
+              color: Theme.of(context).textTheme.titleLarge?.color,
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CategoryFormScreen(),
+                    ),
+                  );
 
-          if (provider.categories.isEmpty) {
-            return const Center(
-              child: Text(
-                'Belum ada kategori.\nTambahkan kategori pertama Anda!',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
+                  // Refresh data after adding new category
+                  if (result != null) {
+                    await Provider.of<CategoryProvider>(context, listen: false).fetchCategories();
+                  }
+                },
               ),
-            );
-          }
+            ],
+          ),
+          body: Consumer<CategoryProvider>(
+            builder: (context, provider, child) {
+              // Load categories when screen is built
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                provider.fetchCategories();
+              });
 
-          return RefreshIndicator(
-            onRefresh: () => provider.fetchCategories(),
-            child: ListView.builder(
-              itemCount: provider.categories.length,
-              itemBuilder: (context, index) {
-                final category = provider.categories[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: ListTile(
-                    leading: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade100,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        Icons.category,
-                        color: Colors.blue,
-                      ),
-                    ),
-                    title: Text(
-                      category.name ?? 'Nama Kategori Tidak Dikenal',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    trailing: PopupMenuButton(
-                      onSelected: (value) async {
-                        if (value == 'edit') {
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => CategoryFormScreen(category: category),
-                            ),
-                          );
-
-                          // Refresh data after edit
-                          if (result != null) {
-                            await Provider.of<CategoryProvider>(context, listen: false).fetchCategories();
-                          }
-                        } else if (value == 'delete') {
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Hapus Kategori'),
-                              content: const Text('Apakah Anda yakin ingin menghapus kategori ini?'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text('Batal'),
-                                ),
-                                TextButton(
-                                  onPressed: () async {
-                                    Navigator.pop(context);
-                                    if (category.id != null) {
-                                      bool success = await provider.deleteCategory(category.id!);
-                                      if (success) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Kategori berhasil dihapus'),
-                                            backgroundColor: Colors.green,
-                                          ),
-                                        );
-                                      } else {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text(provider.message),
-                                            backgroundColor: Colors.red,
-                                          ),
-                                        );
-                                      }
-                                    } else {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Tidak dapat menghapus kategori - ID tidak ditemukan'),
-                                          backgroundColor: Colors.red,
-                                        ),
-                                      );
-                                    }
-                                  },
-                                  child: const Text('Hapus'),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-                      },
-                      itemBuilder: (context) => [
-                        const PopupMenuItem(
-                          value: 'edit',
-                          child: Text('Edit'),
+              if (provider.categories.isEmpty) {
+                return Center(
+                  child: Container(
+                    margin: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardTheme.color,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
                         ),
-                        const PopupMenuItem(
-                          value: 'delete',
-                          child: Text('Hapus'),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.category_outlined,
+                          size: 60,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Belum Ada Kategori',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).textTheme.titleLarge?.color,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Kategori akan muncul di sini setelah Anda menambahkannya',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Theme.of(context).textTheme.bodyMedium?.color,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
                       ],
                     ),
                   ),
                 );
-              },
-            ),
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const CategoryFormScreen(),
-            ),
-          );
+              }
 
-          // Refresh data after adding new category
-          if (result != null) {
-            await Provider.of<CategoryProvider>(context, listen: false).fetchCategories();
-          }
-        },
-        backgroundColor: Theme.of(context).primaryColor,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+              return RefreshIndicator(
+                onRefresh: () => provider.fetchCategories(),
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: provider.categories.length,
+                  itemBuilder: (context, index) {
+                    final category = provider.categories[index];
+                    return CategoryItemCard(
+                      category: category,
+                      onRefresh: () async {
+                        await Provider.of<CategoryProvider>(context, listen: false).fetchCategories();
+                      },
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

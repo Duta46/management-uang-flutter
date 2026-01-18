@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider_change_notifier.dart';
-import '../home/home_screen.dart';
-import '../home/main_navigation_screen.dart';
+import '../../providers/transaction_provider_change_notifier.dart';
+import '../../providers/bill_notification_provider.dart';
+import '../../theme/app_theme.dart';
+import '../../utils/error_handler.dart';
+import '../home/financial_dashboard_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -22,7 +25,31 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: AppTheme.backgroundColor,
+      appBar: AppBar(
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.primaryColor,
+                AppTheme.primaryDarkColor,
+              ],
+            ),
+          ),
+        ),
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.help_outline, color: Colors.white),
+            onPressed: () {
+              // Navigasi ke halaman bantuan
+              Navigator.pushNamed(context, '/help');
+            },
+          ),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Container(
@@ -34,7 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppTheme.cardColor,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -46,9 +73,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                   child: Icon(
-                    Icons.login,
+                    Icons.account_balance_wallet,
                     size: 100,
-                    color: Theme.of(context).primaryColor,
+                    color: AppTheme.primaryColor,
                   ),
                 ),
                 const SizedBox(height: 40),
@@ -58,12 +85,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   'Selamat Datang Kembali!',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
+                        color: AppTheme.textColor,
                       ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Masuk untuk melanjutkan ke akun Anda',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppTheme.textSecondaryColor,
+                      ),
                 ),
                 const SizedBox(height: 40),
 
@@ -75,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Email field
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppTheme.cardColor,
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
@@ -118,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Password field
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppTheme.cardColor,
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
@@ -176,7 +206,12 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: () {
                             // Handle forgot password
                           },
-                          child: const Text('Lupa Kata Sandi?'),
+                          child: Text(
+                            'Lupa Kata Sandi?',
+                            style: TextStyle(
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -192,7 +227,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ? null
                                   : () => _performLogin(authProvider),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context).primaryColor,
+                                backgroundColor: AppTheme.primaryColor,
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -228,7 +263,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           Text(
                             'Belum punya akun?',
-                            style: Theme.of(context).textTheme.bodyMedium,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: AppTheme.textSecondaryColor,
+                                ),
                           ),
                           TextButton(
                             onPressed: () {
@@ -242,7 +279,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Text(
                               'Daftar',
                               style: TextStyle(
-                                color: Theme.of(context).primaryColor,
+                                color: AppTheme.primaryColor,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -273,30 +310,29 @@ class _LoginScreenState extends State<LoginScreen> {
         );
 
         if (success) {
-          // Navigate to main navigation screen after successful login
+          // Navigate to financial dashboard screen after successful login
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => MainNavigationScreen()),
+            MaterialPageRoute(builder: (context) => const FinancialDashboardScreen()),
             (route) => false,
           );
+
+          // Fetch dashboard data after navigation
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Provider.of<TransactionProvider>(context, listen: false).fetchDashboardData();
+            Provider.of<BillNotificationProvider>(context, listen: false).fetchBillNotifications();
+          });
         } else {
-          // Show error message
+          // Show error message using the improved error handler
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(authProvider.message ?? 'Login failed'),
-                backgroundColor: Colors.red,
-              ),
-            );
+            ErrorHandler.showErrorSnackBar(context,
+              UnknownException(authProvider.message ?? 'Login failed'));
           }
         }
-      } catch (e) {
+      } catch (e, stackTrace) {
+        // Handle unexpected errors with the error handler
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Login failed: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          final exception = ErrorHandler.handle(e, stackTrace);
+          ErrorHandler.showErrorSnackBar(context, exception);
         }
       } finally {
         setState(() {

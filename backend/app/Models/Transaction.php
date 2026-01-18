@@ -14,6 +14,8 @@ class Transaction extends Model
     protected $fillable = [
         'user_id',
         'category_id',
+        'bill_reminder_id',
+        'savings_goal_id',
         'amount',
         'type',
         'description',
@@ -33,16 +35,25 @@ class Transaction extends Model
         'updated_at',
     ];
 
-    protected $with = ['category'];
+    // protected $with = ['category', 'billReminder']; // Sementara dinonaktifkan untuk menghindari masalah eager loading
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function billReminder(): BelongsTo
+    {
+        return $this->belongsTo(BillReminder::class, 'bill_reminder_id');
+    }
+
+    public function savingsGoal(): BelongsTo
+    {
+        return $this->belongsTo(SavingsGoal::class, 'savings_goal_id');
     }
 }

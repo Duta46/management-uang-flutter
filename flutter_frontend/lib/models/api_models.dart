@@ -3,12 +3,13 @@ class User {
   final String name;
   final String email;
   final String token;
-
+  final String? profilePhoto;
   User({
     this.id,
     required this.name,
     required this.email,
     required this.token,
+    this.profilePhoto,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -17,6 +18,7 @@ class User {
       name: _parseValueAsString(json['name']) ?? '',
       email: _parseValueAsString(json['email']) ?? '',
       token: _parseValueAsString(json['token']) ?? '',
+      profilePhoto: _parseValueAsString(json['profile_photo']),
     );
   }
 
@@ -45,6 +47,15 @@ class User {
     }
   }
 
+  static List<String>? _parseRolesList(dynamic value) {
+    if (value == null) return null;
+    if (value is List) {
+      return value.map((item) => item.toString()).toList();
+    }
+    return null;
+  }
+
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -58,20 +69,21 @@ class User {
 
 class Category {
   final int? id;
-  final int? userId;
   final String name;
+  final bool? isGlobal;
 
   Category({
     this.id,
-    this.userId,
     required this.name,
+    this.isGlobal,
   });
 
   factory Category.fromJson(Map<String, dynamic> json) {
     return Category(
       id: _parseValueAsInt(json['id']),
-      userId: _parseValueAsInt(json['user_id']),
       name: _parseValueAsString(json['name']) ?? '',
+      // isGlobal field has been removed from the database
+      isGlobal: null,
     );
   }
 
@@ -100,11 +112,19 @@ class Category {
     }
   }
 
+  static bool? _parseValueAsBool(dynamic value) {
+    if (value == null) return null;
+    if (value is bool) return value;
+    if (value is int) return value == 1;
+    if (value is String) return value == '1' || value.toLowerCase() == 'true';
+    return null;
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'user_id': userId,
       'name': name,
+      'is_global': isGlobal,
     };
   }
 }
@@ -113,6 +133,8 @@ class Transaction {
   final int? id;
   final int? userId;
   final int? categoryId;
+  final int? billReminderId;
+  final int? savingsGoalId;
   final String amount;
   final String type; // 'income' or 'expense'
   final String? description;
@@ -125,6 +147,8 @@ class Transaction {
     this.id,
     this.userId,
     this.categoryId,
+    this.billReminderId,
+    this.savingsGoalId,
     required this.amount,
     required this.type,
     this.description,
@@ -142,6 +166,8 @@ class Transaction {
       id: _parseValueAsInt(json['id']),
       userId: _parseValueAsInt(json['user_id']),
       categoryId: _parseValueAsInt(json['category_id']),
+      billReminderId: _parseValueAsInt(json['bill_reminder_id']),
+      savingsGoalId: _parseValueAsInt(json['savings_goal_id']),
       amount: _parseValueAsString(json['amount']) ?? '0',
       type: _parseValueAsString(json['type']) ?? '',
       description: _parseValueAsString(json['description']),
@@ -196,6 +222,8 @@ class Transaction {
       'id': id,
       'user_id': userId,
       'category_id': categoryId,
+      'bill_reminder_id': billReminderId,
+      'savings_goal_id': savingsGoalId,
       'amount': amount,
       'type': type,
       'description': description,

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_frontend/models/category.dart';
 import 'package:flutter_frontend/providers/category_provider_change_notifier.dart';
+import 'package:flutter_frontend/providers/auth_provider_change_notifier.dart';
+import 'package:flutter_frontend/theme/app_theme.dart';
 
 class CategoryFormScreen extends StatefulWidget {
   final Category? category; // Pass existing category for editing
@@ -14,8 +16,7 @@ class CategoryFormScreen extends StatefulWidget {
 
 class _CategoryFormScreenState extends State<CategoryFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-
+  final _namaController = TextEditingController();
 
   @override
   void initState() {
@@ -23,18 +24,31 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
 
     if (widget.category != null) {
       // Editing existing category
-      _nameController.text = widget.category!.name ?? '';
+      _namaController.text = widget.category!.name ?? '';
     }
+
+    // Tambahkan listener untuk memperbarui tampilan ketika teks berubah
+    _namaController.addListener(() {
+      setState(() {
+        // Memperbarui tampilan untuk menampilkan icon yang sesuai
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.background,
       appBar: AppBar(
-        title: Text(widget.category != null ? 'Edit Category' : 'Add Category'),
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
+        backgroundColor: Theme.of(context).cardTheme.color,
+        foregroundColor: Theme.of(context).textTheme.titleLarge?.color,
         elevation: 0,
+        title: Text(
+          widget.category != null ? 'Edit Kategori' : 'Tambah Kategori',
+        ),
+        iconTheme: IconThemeData(
+          color: Theme.of(context).textTheme.titleLarge?.color,
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -44,48 +58,111 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Name input
-              const Text(
-                'Category Name',
+              Text(
+                'Nama Kategori',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
+                  color: Theme.of(context).textTheme.titleLarge?.color,
                 ),
               ),
               const SizedBox(height: 8),
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).cardTheme.color,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.1),
-                      spreadRadius: 1,
+                      color: Colors.black.withOpacity(0.05),
                       blurRadius: 5,
                       offset: const Offset(0, 2),
                     ),
                   ],
                 ),
                 child: TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Name',
-                    prefixIcon: Icon(Icons.category),
+                  controller: _namaController,
+                  style: TextStyle(color: Theme.of(context).textTheme.titleLarge?.color),
+                  decoration: InputDecoration(
+                    labelText: 'Nama',
+                    labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+                    prefixIcon: Icon(Icons.category, color: Theme.of(context).colorScheme.primary),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                      borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
                     filled: true,
                     fillColor: Colors.transparent,
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Theme.of(context).dividerColor),
+                    ),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter a category name';
+                      return 'Harap masukkan nama kategori';
                     }
                     return null;
                   },
                 ),
               ),
               const SizedBox(height: 16),
+
+              // Preview icon
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardTheme.color,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 5,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        _getCategoryIcon(_namaController.text),
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Pratinjau Ikon:',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).textTheme.titleLarge?.color,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _namaController.text.isEmpty ? 'Masukkan nama kategori untuk melihat ikon' : 'Ikon untuk "${_namaController.text}"',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
               const SizedBox(height: 24),
 
@@ -100,9 +177,9 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                         if (_formKey.currentState!.validate()) {
                           if (widget.category != null) {
                             // Update existing category
-                            bool success = await provider.updateCategory(
+                            bool success = await provider.perbaruiKategori(
                               widget.category!.id!,
-                              _nameController.text,
+                              _namaController.text,
                             );
 
                             if (success) {
@@ -111,7 +188,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                               Navigator.pop(context, true); // Mengembalikan true sebagai indikator sukses
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Category updated successfully'),
+                                  content: Text('Kategori berhasil diperbarui'),
                                   backgroundColor: Colors.green,
                                 ),
                               );
@@ -125,9 +202,10 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                               );
                             }
                           } else {
-                            // Create new category
-                            bool success = await provider.createCategory(
-                              _nameController.text,
+                            // Create new category (always as personal category, not global)
+                            bool success = await provider.buatKategori(
+                              _namaController.text,
+                              isGlobal: false,
                             );
 
                             if (success) {
@@ -136,7 +214,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                               Navigator.pop(context, true); // Mengembalikan true sebagai indikator sukses
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Category added successfully'),
+                                  content: Text('Kategori berhasil ditambahkan'),
                                   backgroundColor: Colors.green,
                                 ),
                               );
@@ -153,7 +231,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
+                        backgroundColor: Theme.of(context).colorScheme.primary,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -161,7 +239,7 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
                         elevation: 0,
                       ),
                       child: Text(
-                        widget.category != null ? 'Update Category' : 'Add Category',
+                        widget.category != null ? 'Perbarui Kategori' : 'Tambah Kategori',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -178,9 +256,54 @@ class _CategoryFormScreenState extends State<CategoryFormScreen> {
     );
   }
 
+  IconData _getCategoryIcon(String categoryName) {
+    // Konversi nama kategori ke huruf kecil untuk pencocokan
+    final lowerNamaKategori = categoryName.toLowerCase();
+
+    // Daftar kata kunci dan icon yang sesuai
+    if (lowerNamaKategori.contains('listrik') || lowerNamaKategori.contains('pln') || lowerNamaKategori.contains('tagihan') || lowerNamaKategori.contains('pembayaran')) {
+      return Icons.electrical_services;
+    } else if (lowerNamaKategori.contains('gaji') || lowerNamaKategori.contains('pendapatan') || lowerNamaKategori.contains('income') || lowerNamaKategori.contains('kerja')) {
+      return Icons.work;
+    } else if (lowerNamaKategori.contains('belanja') || lowerNamaKategori.contains('shopping') || lowerNamaKategori.contains('makan') || lowerNamaKategori.contains('food')) {
+      return Icons.shopping_cart;
+    } else if (lowerNamaKategori.contains('transportasi') || lowerNamaKategori.contains('travel') || lowerNamaKategori.contains('mobil') || lowerNamaKategori.contains('bensin')) {
+      return Icons.directions_car;
+    } else if (lowerNamaKategori.contains('kesehatan') || lowerNamaKategori.contains('dokter') || lowerNamaKategori.contains('obat') || lowerNamaKategori.contains('medis')) {
+      return Icons.local_hospital;
+    } else if (lowerNamaKategori.contains('pendidikan') || lowerNamaKategori.contains('sekolah') || lowerNamaKategori.contains('kuliah') || lowerNamaKategori.contains('buku')) {
+      return Icons.school;
+    } else if (lowerNamaKategori.contains('hiburan') || lowerNamaKategori.contains('entertainment') || lowerNamaKategori.contains('film') || lowerNamaKategori.contains('game')) {
+      return Icons.movie;
+    } else if (lowerNamaKategori.contains('pajak') || lowerNamaKategori.contains('tax') || lowerNamaKategori.contains('pemerintah')) {
+      return Icons.account_balance;
+    } else if (lowerNamaKategori.contains('asuransi') || lowerNamaKategori.contains('insurance')) {
+      return Icons.shield;
+    } else if (lowerNamaKategori.contains('pulsa') || lowerNamaKategori.contains('telepon') || lowerNamaKategori.contains('internet')) {
+      return Icons.phone_iphone;
+    } else if (lowerNamaKategori.contains('air') || lowerNamaKategori.contains('pdam')) {
+      return Icons.water_drop;
+    } else if (lowerNamaKategori.contains('sewa') || lowerNamaKategori.contains('kontrak')) {
+      return Icons.home;
+    } else if (lowerNamaKategori.contains('investasi') || lowerNamaKategori.contains('saham')) {
+      return Icons.trending_up;
+    } else if (lowerNamaKategori.contains('pakaian') || lowerNamaKategori.contains('cloth') || lowerNamaKategori.contains('fashion')) {
+      return Icons.checkroom;
+    } else if (lowerNamaKategori.contains('hadiah') || lowerNamaKategori.contains('gift')) {
+      return Icons.card_giftcard;
+    } else if (lowerNamaKategori.contains('hutang') || lowerNamaKategori.contains('pinjaman')) {
+      return Icons.money_off;
+    } else if (lowerNamaKategori.contains('tabungan') || lowerNamaKategori.contains('saving')) {
+      return Icons.savings;
+    } else {
+      // Icon default jika tidak ada kecocokan
+      return Icons.category;
+    }
+  }
+
   @override
   void dispose() {
-    _nameController.dispose();
+    _namaController.dispose();
     super.dispose();
   }
 }
