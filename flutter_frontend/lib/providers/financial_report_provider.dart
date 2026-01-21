@@ -23,8 +23,11 @@ class FinancialReportProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Jika pengguna telah memilih bulan spesifik, kita perlu mengirim informasi ini ke backend
+      // Untuk sementara, kita tetap gunakan fungsi yang ada, namun nanti perlu diperbarui di backend
+      // agar endpoint bisa menerima parameter bulan juga
       final Response.ApiResponse response = await _apiRepository.getComprehensiveReport(period);
-      
+
       if (response.success) {
         _reportData = response.data;
         _message = 'Report loaded successfully';
@@ -39,10 +42,36 @@ class FinancialReportProvider extends ChangeNotifier {
     }
   }
 
-  void changePeriod(String period) {
+  Future<void> fetchReportForSpecificMonth({String period = 'monthly', String? monthYear}) async {
+    _isLoading = true;
     _selectedPeriod = period;
-    fetchReport(period: period);
+    notifyListeners();
+
+    try {
+      // Panggil endpoint dengan informasi bulan spesifik
+      print('DEBUG: Calling getComprehensiveReportForSpecificMonth with period: $period, monthYear: $monthYear');
+      final Response.ApiResponse response = await _apiRepository.getComprehensiveReportForSpecificMonth(period, monthYear);
+
+      print('DEBUG: API Response success: ${response.success}');
+      print('DEBUG: API Response data: ${response.data}');
+      print('DEBUG: API Response message: ${response.message}');
+
+      if (response.success) {
+        _reportData = response.data;
+        print('DEBUG: Setting report data to: $_reportData');
+        _message = 'Report loaded successfully';
+      } else {
+        _message = response.message ?? 'Failed to load report';
+      }
+    } catch (e) {
+      print('DEBUG: Error in fetchReportForSpecificMonth: $e');
+      _message = 'Error loading report: $e';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
+
 
   void setMessage(String message) {
     _message = message;

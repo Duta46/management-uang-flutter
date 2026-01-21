@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\Models\Budget;
+use App\Models\Budget;
 use App\Models\SavingsGoal;
-use App\Models\Models\BillReminder;
+use App\Models\BillReminder;
 use App\Models\Transaction;
 use App\Models\Category;
 use Carbon\Carbon;
@@ -15,21 +15,87 @@ class FinancialReportService
     /**
      * Generate financial summary for a user
      */
-    public function getFinancialSummary(int $userId, string $period = 'monthly')
+    public function getFinancialSummary(int $userId, string $period = 'monthly', ?int $year = null, ?int $month = null)
     {
-        $startDate = $this->getStartDate($period);
-        $endDate = Carbon::today();
+        \Log::info('getFinancialSummary called', [
+            'userId' => $userId,
+            'period' => $period,
+            'year' => $year,
+            'month' => $month
+        ]);
 
-        // Total income and expenses
-        $income = Transaction::where('user_id', $userId)
-            ->where('type', 'income')
-            ->whereBetween('date', [$startDate, $endDate])
-            ->sum('amount');
+        try {
+            // Jika tahun dan bulan disediakan, kita prioritaskan itu daripada period
+            if ($this->validateMonthYear($year, $month)) {
+                $startDate = Carbon::createFromDate($year, $month, 1);
+                $endDate = $startDate->copy()->endOfMonth();
 
-        $expenses = Transaction::where('user_id', $userId)
-            ->where('type', 'expense')
-            ->whereBetween('date', [$startDate, $endDate])
-            ->sum('amount');
+                \Log::info('Using specific month/year filter', [
+                    'startDate' => $startDate->format('Y-m-d'),
+                    'endDate' => $endDate->format('Y-m-d')
+                ]);
+            } else {
+                $startDate = $this->getStartDate($period);
+                $endDate = Carbon::today();
+
+                \Log::info('Using period filter', [
+                    'startDate' => $startDate->format('Y-m-d'),
+                    'endDate' => $endDate->format('Y-m-d')
+                ]);
+            }
+
+            // Total income and expenses
+            $incomeQuery = Transaction::where('user_id', $userId)
+                ->where('type', 'income')
+                ->whereDate('date', '>=', $startDate->format('Y-m-d'))
+                ->whereDate('date', '<=', $endDate->format('Y-m-d'));
+
+            // Ambil semua transaksi untuk debugging
+            $incomeTransactions = $incomeQuery->get();
+            $income = $incomeTransactions->sum(function($transaction) {
+                return (float) $transaction->amount;
+            });
+
+            \Log::info('Income query result', [
+                'income' => $income,
+                'count' => $incomeQuery->count(),
+                'raw_transactions' => $incomeTransactions->pluck('amount')->toArray(),
+                'query' => $incomeQuery->toSql(),
+                'bindings' => $incomeQuery->getBindings(),
+                'startDate_formatted' => $startDate->format('Y-m-d'),
+                'endDate_formatted' => $endDate->format('Y-m-d')
+            ]);
+
+            $expensesQuery = Transaction::where('user_id', $userId)
+                ->where('type', 'expense')
+                ->whereDate('date', '>=', $startDate->format('Y-m-d'))
+                ->whereDate('date', '<=', $endDate->format('Y-m-d'));
+
+            // Ambil semua transaksi untuk debugging
+            $expenseTransactions = $expensesQuery->get();
+            $expenses = $expenseTransactions->sum(function($transaction) {
+                return (float) $transaction->amount;
+            });
+
+            \Log::info('Expenses query result', [
+                'expenses' => $expenses,
+                'count' => $expensesQuery->count(),
+                'raw_transactions' => $expenseTransactions->pluck('amount')->toArray(),
+                'query' => $expensesQuery->toSql(),
+                'bindings' => $expensesQuery->getBindings(),
+                'startDate_formatted' => $startDate->format('Y-m-d'),
+                'endDate_formatted' => $endDate->format('Y-m-d')
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error in getFinancialSummary', [
+                'error' => $e->getMessage(),
+                'userId' => $userId,
+                'period' => $period,
+                'year' => $year,
+                'month' => $month
+            ]);
+            throw $e;
+        }
 
         // Budget summary
         $budgets = Budget::where('user_id', $userId)
@@ -59,6 +125,32 @@ class FinancialReportService
             ->where('due_date', '<=', $endDate->copy()->addDays(30))
             ->sum('amount');
 
+        // Jika kita menggunakan filter bulan dan tahun spesifik, ambil juga transaksi untuk laporan
+        $transactions = [];
+        try {
+            if ($this->validateMonthYear($year, $month)) {
+                // Ambil transaksi untuk bulan dan tahun yang ditentukan
+                $transactionService = app(TransactionServiceInterface::class);
+                $transactions = $transactionService->getMonthlyTransactions($userId, $month, $year);
+            } else {
+                // Ambil transaksi untuk periode yang ditentukan
+                $transactions = Transaction::where('user_id', $userId)
+                    ->whereBetween('date', [$startDate, $endDate])
+                    ->with('category')
+                    ->orderBy('date', 'desc')
+                    ->get()
+                    ->toArray();
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error getting transactions for report', [
+                'error' => $e->getMessage(),
+                'userId' => $userId,
+                'year' => $year,
+                'month' => $month
+            ]);
+            $transactions = [];
+        }
+
         return [
             'period' => $period,
             'start_date' => $startDate->format('Y-m-d'),
@@ -74,22 +166,48 @@ class FinancialReportService
             'savings_progress' => $totalSavingsTarget > 0 ? round(($totalSavingsCurrent / $totalSavingsTarget) * 100, 2) : 0,
             'due_bills' => $dueBills,
             'upcoming_bills' => $upcomingBills,
+            'transactions' => $transactions,
+            'debug_info' => [
+                'income_raw' => $income,
+                'expenses_raw' => $expenses,
+                'income_count' => $incomeTransactions->count(),
+                'expenses_count' => $expenseTransactions->count(),
+                'start_date_used' => $startDate->format('Y-m-d'),
+                'end_date_used' => $endDate->format('Y-m-d'),
+            ],
         ];
     }
 
     /**
      * Get expense breakdown by category
      */
-    public function getExpenseBreakdown(int $userId, string $period = 'monthly')
+    public function getExpenseBreakdown(int $userId, string $period = 'monthly', ?int $year = null, ?int $month = null)
     {
-        $startDate = $this->getStartDate($period);
-        $endDate = Carbon::today();
+        try {
+            // Jika tahun dan bulan disediakan, kita prioritaskan itu daripada period
+            if ($this->validateMonthYear($year, $month)) {
+                $startDate = Carbon::createFromDate($year, $month, 1);
+                $endDate = $startDate->copy()->endOfMonth();
+            } else {
+                $startDate = $this->getStartDate($period);
+                $endDate = Carbon::today();
+            }
 
-        $expenses = Transaction::where('user_id', $userId)
-            ->where('type', 'expense')
-            ->whereBetween('date', [$startDate, $endDate])
-            ->with('category')
-            ->get();
+            $expenses = Transaction::where('user_id', $userId)
+                ->where('type', 'expense')
+                ->whereBetween('date', [$startDate, $endDate])
+                ->with('category')
+                ->get();
+        } catch (\Exception $e) {
+            \Log::error('Error in getExpenseBreakdown', [
+                'error' => $e->getMessage(),
+                'userId' => $userId,
+                'period' => $period,
+                'year' => $year,
+                'month' => $month
+            ]);
+            throw $e;
+        }
 
         $categoryBreakdown = [];
         $totalExpenses = $expenses->sum('amount');
@@ -123,14 +241,30 @@ class FinancialReportService
     /**
      * Get budget vs actual spending comparison
      */
-    public function getBudgetVsActual(int $userId, string $period = 'monthly')
+    public function getBudgetVsActual(int $userId, string $period = 'monthly', ?int $year = null, ?int $month = null)
     {
-        $month = $this->getStartDate($period)->format('Y-m');
+        try {
+            // Jika tahun dan bulan disediakan, kita prioritaskan itu daripada period
+            if ($this->validateMonthYear($year, $month)) {
+                $monthStr = sprintf('%04d-%02d', $year, $month);
+            } else {
+                $monthStr = $this->getStartDate($period)->format('Y-m');
+            }
 
-        $budgets = Budget::where('user_id', $userId)
-            ->where('month', $month)
-            ->with('category')
-            ->get();
+            $budgets = Budget::where('user_id', $userId)
+                ->where('month', $monthStr)
+                ->with('category')
+                ->get();
+        } catch (\Exception $e) {
+            \Log::error('Error in getBudgetVsActual', [
+                'error' => $e->getMessage(),
+                'userId' => $userId,
+                'period' => $period,
+                'year' => $year,
+                'month' => $month
+            ]);
+            throw $e;
+        }
 
         $results = [];
 
@@ -226,5 +360,27 @@ class FinancialReportService
             default:
                 return $today->copy()->startOfMonth();
         }
+    }
+
+    /**
+     * Helper to validate month and year parameters
+     */
+    private function validateMonthYear(?int $year, ?int $month): bool
+    {
+        if ($year === null || $month === null) {
+            return false;
+        }
+
+        // Check if month is between 1 and 12
+        if ($month < 1 || $month > 12) {
+            return false;
+        }
+
+        // Check if year is reasonable (between 1900 and 2100)
+        if ($year < 1900 || $year > 2100) {
+            return false;
+        }
+
+        return true;
     }
 }

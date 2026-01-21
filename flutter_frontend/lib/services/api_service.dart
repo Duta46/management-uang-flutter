@@ -3,7 +3,6 @@ import 'dart:convert';
 import '../models/api_response.dart' as Response;
 import '../config/api_config.dart';
 import '../utils/logger.dart';
-import '../models/budget.dart';
 import '../models/savings_goal.dart';
 import '../models/bill_reminder.dart';
 import '../services/data_service.dart';
@@ -141,58 +140,6 @@ class ApiService {
     }
   }
 
-  // Budget methods
-  Future<BudgetApiResponse> getBudets() async {
-    try {
-      final response = await get('/budgets');
-      if (response.success) {
-        return BudgetApiResponse.fromJson(response.data);
-      } else {
-        return BudgetApiResponse(success: false, message: response.message);
-      }
-    } catch (e) {
-      return BudgetApiResponse(success: false, message: e.toString());
-    }
-  }
-
-  Future<BudgetApiResponse> createBudget(Budget budget) async {
-    try {
-      final response = await post('/budgets', budget.toJson());
-      if (response.success) {
-        return BudgetApiResponse.fromJson(response.data);
-      } else {
-        return BudgetApiResponse(success: false, message: response.message);
-      }
-    } catch (e) {
-      return BudgetApiResponse(success: false, message: e.toString());
-    }
-  }
-
-  Future<BudgetApiResponse> updateBudget(Budget budget) async {
-    try {
-      final response = await put('/budgets/${budget.id}', budget.toJson());
-      if (response.success) {
-        return BudgetApiResponse.fromJson(response.data);
-      } else {
-        return BudgetApiResponse(success: false, message: response.message);
-      }
-    } catch (e) {
-      return BudgetApiResponse(success: false, message: e.toString());
-    }
-  }
-
-  Future<BudgetApiResponse> deleteBudget(int id) async {
-    try {
-      final response = await delete('/budgets/$id');
-      if (response.success) {
-        return BudgetApiResponse.fromJson(response.data);
-      } else {
-        return BudgetApiResponse(success: false, message: response.message);
-      }
-    } catch (e) {
-      return BudgetApiResponse(success: false, message: e.toString());
-    }
-  }
 
   // Savings Goal methods
   Future<SavingsGoalApiResponse> getSavingsGoals() async {

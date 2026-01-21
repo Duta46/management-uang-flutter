@@ -184,13 +184,43 @@ class FinancialReportController extends Controller
             }
 
             $period = $request->get('period', 'monthly');
+            $year = $request->get('year');
+            $month = $request->get('month');
 
-            $summary = $this->financialReportService->getFinancialSummary($user->id, $period);
-            $breakdown = $this->financialReportService->getExpenseBreakdown($user->id, $period);
-            $budgetComparison = $this->financialReportService->getBudgetVsActual($user->id, $period);
+            \Log::info('FinancialReportController getComprehensiveReport', [
+                'period' => $period,
+                'year' => $year,
+                'month' => $month,
+                'user_id' => $user->id
+            ]);
+
+            // Konversi year dan month ke integer jika tersedia
+            $year = $year !== null ? (int)$year : null;
+            $month = $month !== null ? (int)$month : null;
+
+            \Log::info('FinancialReportController calling services', [
+                'user_id' => $user->id,
+                'period' => $period,
+                'year' => $year,
+                'month' => $month
+            ]);
+
+            $summary = $this->financialReportService->getFinancialSummary($user->id, $period, $year, $month);
+            \Log::info('FinancialReportController summary result', ['summary' => $summary]);
+
+            $breakdown = $this->financialReportService->getExpenseBreakdown($user->id, $period, $year, $month);
+            \Log::info('FinancialReportController breakdown result', ['has_data' => !empty($breakdown)]);
+
+            $budgetComparison = $this->financialReportService->getBudgetVsActual($user->id, $period, $year, $month);
+            \Log::info('FinancialReportController budgetComparison result', ['has_data' => !empty($budgetComparison)]);
+
             $savingsProgress = $this->financialReportService->getSavingsGoalsProgress($user->id);
-            $upcomingBills = $this->financialReportService->getUpcomingBills($user->id, 30);
+            \Log::info('FinancialReportController savingsProgress result', ['has_data' => !empty($savingsProgress)]);
 
+            $upcomingBills = $this->financialReportService->getUpcomingBills($user->id, 30);
+            \Log::info('FinancialReportController upcomingBills result', ['has_data' => !empty($upcomingBills)]);
+
+            // Tambahkan informasi bulan ke laporan jika tersedia
             $report = [
                 'summary' => $summary,
                 'expense_breakdown' => $breakdown,
@@ -199,16 +229,53 @@ class FinancialReportController extends Controller
                 'upcoming_bills' => $upcomingBills
             ];
 
+            // Tambahkan informasi debugging
+            $report['debug_info'] = [
+                'received_year' => $year,
+                'received_month' => $month,
+                'received_period' => $period,
+                'user_id' => $user->id
+            ];
+
+            if ($year !== null && $month !== null) {
+                $report['selected_month'] = [
+                    'year' => $year,
+                    'month' => $month,
+                    'month_name' => $this->getMonthName($month)
+                ];
+            }
+
             return response()->json([
                 'success' => true,
                 'data' => $report,
                 'message' => 'Comprehensive financial report retrieved successfully'
             ]);
         } catch (\Exception $e) {
+            \Log::error('FinancialReportController error', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while retrieving comprehensive financial report: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Helper function to get month name in Indonesian
+     */
+    private function getMonthName(int $month): string
+    {
+        $months = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+
+        return $months[$month] ?? 'Bulan Tidak Valid';
     }
 }

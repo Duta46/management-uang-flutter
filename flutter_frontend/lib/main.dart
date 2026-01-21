@@ -3,13 +3,11 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
 import 'package:flutter_frontend/services/data_service.dart';
-import 'package:flutter_frontend/models/budget.dart';
 import 'package:flutter_frontend/models/savings_goal.dart';
 import 'package:flutter_frontend/models/bill_reminder.dart';
 import 'package:flutter_frontend/providers/auth_provider_change_notifier.dart';
 import 'package:flutter_frontend/providers/category_provider_change_notifier.dart';
 import 'package:flutter_frontend/providers/transaction_provider_change_notifier.dart';
-import 'package:flutter_frontend/providers/budget_provider.dart';
 import 'package:flutter_frontend/providers/savings_goal_provider.dart';
 import 'package:flutter_frontend/providers/bill_reminder_provider.dart';
 import 'package:flutter_frontend/providers/financial_report_provider.dart';
@@ -25,9 +23,6 @@ import 'screens/auth/login_screen.dart';
 import 'screens/home/financial_dashboard_screen.dart';
 import 'screens/onboarding_screen.dart';
 // import 'screens/analyst_ai_screen.dart'; // AI feature moved to coming soon
-import 'screens/budget/budget_screen.dart';
-import 'screens/budget/add_budget_screen.dart';
-import 'screens/budget/edit_budget_screen.dart';
 import 'screens/categories/category_list_screen.dart';
 import 'screens/transactions/transaction_list_screen.dart';
 import 'screens/transactions/transaction_form_screen.dart';
@@ -89,9 +84,6 @@ class MyApp extends StatelessWidget {
           ChangeNotifierProvider<TransactionProvider>(
             create: (context) => TransactionProvider(),
           ),
-          ChangeNotifierProvider<BudgetProvider>(
-            create: (context) => BudgetProvider(),
-          ),
           ChangeNotifierProvider<SavingsGoalProvider>(
             create: (context) => SavingsGoalProvider(),
           ),
@@ -145,8 +137,6 @@ class MyApp extends StatelessWidget {
                 // '/chatbot': (context) => const FinancialChatbotScreen(), // AI feature commented out
                 // '/ollama': (context) => const OllamaScreen(), // AI feature commented out
                 // '/ollama-chatbot': (context) => const OllamaFinancialChatbotScreen(), // AI feature commented out
-                '/budget': (context) => const BudgetScreen(),
-                '/add-budget': (context) => const AddBudgetScreen(),
                 '/savings-goals': (context) => const SavingsGoalScreen(),
                 '/add-savings-goal': (context) => const AddSavingsGoalScreen(),
                 '/bill-reminders': (context) => const BillReminderScreen(),
@@ -173,11 +163,6 @@ class MyApp extends StatelessWidget {
               },
               onGenerateRoute: (settings) {
                 switch (settings.name) {
-                  case '/edit-budget':
-                    final budget = settings.arguments as Budget;
-                    return MaterialPageRoute(
-                      builder: (context) => EditBudgetScreen(budget: budget),
-                    );
                   case '/edit-savings-goal':
                     final savingsGoal = settings.arguments as SavingsGoal;
                     return MaterialPageRoute(

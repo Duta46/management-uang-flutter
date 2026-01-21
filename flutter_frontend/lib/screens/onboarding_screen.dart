@@ -23,7 +23,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'image': 'assets/images/onboarding2.png', // Placeholder
     },
     {
-      'title': 'Atur Anggaran Bulanan',
       'description': 'Tentukan batas pengeluaran untuk setiap kategori dan lacak penggunaannya secara real-time.',
       'image': 'assets/images/onboarding3.png', // Placeholder
     },

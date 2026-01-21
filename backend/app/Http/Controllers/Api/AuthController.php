@@ -83,30 +83,53 @@ class AuthController extends Controller
         ]);
     }
 
-    public function updateProfile(Request $request): JsonResponse
+    public function updateProfileWithPhoto(Request $request): JsonResponse
     {
+        \Log::info('UpdateProfileWithPhoto called', [
+            'user_id' => $request->user()->id,
+            'has_file' => $request->hasFile('profile_photo'),
+            'fields' => array_keys($request->all())
+        ]);
+
         $request->validate([
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|string|email|max:255|unique:users,email,' . $request->user()->id,
-            'profile_photo' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048', // max 2MB
+            'profile_photo' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $user = $request->user();
-        $updateData = $request->only(['name', 'email']);
+        $updates = $request->only(['name', 'email']);
 
         // Handle profile photo upload
         if ($request->hasFile('profile_photo')) {
             $image = $request->file('profile_photo');
-            $imageName = time() . '_' . $user->id . '.' . $image->getClientOriginalExtension();
-            $imagePath = $image->storeAs('profile-photos', $imageName, 'public');
-            $updateData['profile_photo'] = $imagePath;
+
+            // Delete old photo if exists
+            if ($user->profile_photo) {
+                \Storage::disk('public')->delete($user->profile_photo);
+            }
+
+            // Save new photo
+            $fileName = time() . '_' . $user->id . '.' . $image->getClientOriginalExtension();
+            $filePath = $image->storeAs('profile-photos', $fileName, 'public');
+
+            $updates['profile_photo'] = $filePath;
         }
 
-        $user->update($updateData);
+        if (!empty($updates)) {
+            $user->update($updates);
+        }
+
+        \Log::info('Profile updated with photo', [
+            'user_id' => $user->id,
+            'profile_photo' => $user->profile_photo
+        ]);
 
         return response()->json([
             'success' => true,
-            'data' => $user,
+            'data' => [
+                'user' => $user
+            ],
             'message' => 'Profile updated successfully',
         ]);
     }

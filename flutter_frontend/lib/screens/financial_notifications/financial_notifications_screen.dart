@@ -65,7 +65,6 @@ class _FinancialNotificationsScreenState extends State<FinancialNotificationsScr
 
   IconData _getNotificationIcon(String type) {
     switch (type) {
-      case 'budget_alert':
         return Icons.account_balance_wallet;
       case 'savings_reminder':
         return Icons.savings;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider_change_notifier.dart';
 import '../../theme/app_theme.dart';
+import '../main_navigation_screen.dart';
 import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -377,14 +378,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
 
         if (success) {
-          // Navigate back to login screen
-          Navigator.of(context).pop();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Pendaftaran berhasil! Silakan masuk.'),
-              backgroundColor: Colors.green,
-            ),
+          // Setelah registrasi berhasil, coba login otomatis
+          bool loginSuccess = await authProvider.login(
+            _emailController.text.trim(),
+            _passwordController.text,
           );
+
+          if (loginSuccess) {
+            // Jika login otomatis berhasil, arahkan ke MainNavigationScreen
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
+              (route) => false,
+            );
+          } else {
+            // Jika login otomatis gagal, kembali ke halaman login
+            Navigator.of(context).pop();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Pendaftaran berhasil! Silakan masuk.'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
         } else {
           // Show error message
           if (mounted) {

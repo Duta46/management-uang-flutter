@@ -20,7 +20,7 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        'https://adapters-cricket-senator-bangkok.trycloudflare.com',
+        'https://street-counseling-pdf-legislative.trycloudflare.com',
     ],
 
     'allowed_origins_patterns' => [],

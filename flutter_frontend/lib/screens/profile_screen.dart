@@ -43,72 +43,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
-      // Show loading indicator
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return const AlertDialog(
-            content: Row(
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(width: 20),
-                Text("Mengunggah foto profil..."),
-              ],
-            ),
-          );
-        },
-      );
-
       try {
-        final request = http.MultipartRequest(
-          'PUT',
-          Uri.parse('${ApiConfig.baseUrl}/auth/profile'),
+        bool success = await authProvider.updateProfileWithPhoto(
+          profileImage: image.path,
         );
-        request.headers.addAll({
-          'Authorization': 'Bearer ${authProvider.currentUser?.token}',
-        });
 
-        final multipartFile = await http.MultipartFile.fromPath(
-          'profile_photo',
-          image.path,
-        );
-        request.files.add(multipartFile);
-
-        final response = await request.send();
-        final responseBody = await response.stream.bytesToString();
-
-        if (response.statusCode == 200) {
-          final data = json.decode(responseBody);
-          if (data['success']) {
-            // Refresh user profile
-            await authProvider.fetchUserProfile();
-            if (mounted) {
-              Navigator.of(context).pop(); // Close loading dialog
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Foto profil berhasil diperbarui'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            }
-          } else {
-            if (mounted) {
-              Navigator.of(context).pop(); // Close loading dialog
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(data['message'] ?? 'Gagal memperbarui foto profil'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
+        if (success) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Foto profil berhasil diperbarui'),
+                backgroundColor: Colors.green,
+              ),
+            );
           }
         } else {
           if (mounted) {
-            Navigator.of(context).pop(); // Close loading dialog
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Gagal terhubung ke server'),
+              SnackBar(
+                content: Text(authProvider.message ?? 'Gagal memperbarui foto profil'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -116,7 +69,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
       } catch (e) {
         if (mounted) {
-          Navigator.of(context).pop(); // Close loading dialog
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error: $e'),
@@ -209,19 +161,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Center(
                     child: Stack(
                       children: [
-                        CircleAvatar(
-                          radius: 60,
-                          backgroundImage: authProvider.currentUser?.profilePhoto != null
-                              ? NetworkImage(authProvider.currentUser!.profilePhoto!)
-                              : null,
-                          child: authProvider.currentUser?.profilePhoto == null
-                              ? Icon(
+                        authProvider.currentUser?.profilePhoto != null
+                            ? CircleAvatar(
+                                radius: 60,
+                                backgroundImage: NetworkImage(
+                                  '${ApiConfig.storageBaseUrl}/${authProvider.currentUser!.profilePhoto!}?v=${authProvider.currentUser!.cacheBuster}',
+                                  scale: 1.0,
+                                ),
+                                onBackgroundImageError: (exception, stackTrace) {
+                                  print('Error loading profile photo: $exception');
+                                },
+                              )
+                            : CircleAvatar(
+                                radius: 60,
+                                child: Icon(
                                   Icons.person,
                                   size: 60,
                                   color: Theme.of(context).primaryColor,
-                                )
-                              : null,
-                        ),
+                                ),
+                              ),
                         Positioned(
                           bottom: 0,
                           right: 0,

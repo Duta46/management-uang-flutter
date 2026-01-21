@@ -193,6 +193,11 @@ class TransactionService implements TransactionServiceInterface
         return $this->transactionRepository->getSummaryByMonth($userId, $month, $year);
     }
 
+    public function getMonthlyTransactions(int $userId, int $month, int $year): array
+    {
+        return $this->transactionRepository->getMonthlyTransactions($userId, $month, $year);
+    }
+
     private function validateTransactionData(array $data): void
     {
         // Validasi bahwa tipe transaksi adalah income atau expense

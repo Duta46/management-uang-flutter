@@ -6,6 +6,7 @@ import '../screens/home/monthly_finance_screen.dart';
 import '../screens/home/financial_dashboard_screen.dart';
 import '../screens/coming_soon_screen.dart';
 import '../screens/profile_screen.dart';
+import '../screens/savings/savings_goal_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({Key? key}) : super(key: key);
@@ -15,7 +16,7 @@ class MainNavigationScreen extends StatefulWidget {
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
-  int _selectedIndex = 0;
+  int _selectedIndex = 2; // Inisialisasi ke indeks 2 (FinancialDashboardScreen) sebagai halaman beranda
 
   final List<Widget> _pages = [
     const DailyTransactionScreen(),
@@ -50,7 +51,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         shape: const CircularNotchedRectangle(),
         notchMargin: 6.0,
         child: SizedBox(
-          height: 60,
+          height: 56, // Reduced height
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -66,7 +67,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           setState(() {
-            _selectedIndex = 2; // Index for dashboard
+            _selectedIndex = 2; // Index for dashboard (already the default)
           });
         },
         backgroundColor: Theme.of(context).primaryColor,
@@ -81,9 +82,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     return GestureDetector(
       onTap: () => _onItemTapped(index),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8), // Reduced padding
         decoration: BoxDecoration(
-          color: _selectedIndex == index 
+          color: _selectedIndex == index
               ? Theme.of(context).primaryColor.withOpacity(0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
@@ -93,17 +94,18 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           children: [
             Icon(
               icon,
-              color: _selectedIndex == index 
-                  ? Theme.of(context).primaryColor 
+              size: 20, // Explicitly set icon size
+              color: _selectedIndex == index
+                  ? Theme.of(context).primaryColor
                   : Colors.grey,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2), // Reduced space
             Text(
               label,
               style: TextStyle(
-                fontSize: 10,
-                color: _selectedIndex == index 
-                    ? Theme.of(context).primaryColor 
+                fontSize: 9, // Reduced font size
+                color: _selectedIndex == index
+                    ? Theme.of(context).primaryColor
                     : Colors.grey,
               ),
             ),

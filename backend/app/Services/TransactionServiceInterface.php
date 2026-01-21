@@ -14,4 +14,5 @@ interface TransactionServiceInterface
     public function updateTransaction(int $id, int $userId, array $data): ?Transaction;
     public function deleteTransaction(int $id, int $userId): bool;
     public function getMonthlySummary(int $userId, int $month, int $year): array;
+    public function getMonthlyTransactions(int $userId, int $month, int $year): array;
 }

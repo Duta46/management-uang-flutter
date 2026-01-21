@@ -35,72 +35,25 @@ class _FinancialDashboardScreenState extends State<FinancialDashboardScreen> {
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
-      // Show loading indicator
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return const AlertDialog(
-            content: Row(
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(width: 20),
-                Text("Mengunggah foto profil..."),
-              ],
-            ),
-          );
-        },
-      );
-
       try {
-        final request = http.MultipartRequest(
-          'PUT',
-          Uri.parse('${ApiConfig.baseUrl}/auth/profile'),
+        bool success = await authProvider.updateProfileWithPhoto(
+          profileImage: image.path,
         );
-        request.headers.addAll({
-          'Authorization': 'Bearer ${authProvider.currentUser?.token}',
-        });
 
-        final multipartFile = await http.MultipartFile.fromPath(
-          'profile_photo',
-          image.path,
-        );
-        request.files.add(multipartFile);
-
-        final response = await request.send();
-        final responseBody = await response.stream.bytesToString();
-
-        if (response.statusCode == 200) {
-          final data = json.decode(responseBody);
-          if (data['success']) {
-            // Refresh user profile
-            await authProvider.fetchUserProfile();
-            if (mounted) {
-              Navigator.of(context).pop(); // Close loading dialog
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Foto profil berhasil diperbarui'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            }
-          } else {
-            if (mounted) {
-              Navigator.of(context).pop(); // Close loading dialog
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(data['message'] ?? 'Gagal memperbarui foto profil'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
+        if (success) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Foto profil berhasil diperbarui'),
+                backgroundColor: Colors.green,
+              ),
+            );
           }
         } else {
           if (mounted) {
-            Navigator.of(context).pop(); // Close loading dialog
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Gagal terhubung ke server'),
+              SnackBar(
+                content: Text(authProvider.message ?? 'Gagal memperbarui foto profil'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -108,7 +61,6 @@ class _FinancialDashboardScreenState extends State<FinancialDashboardScreen> {
         }
       } catch (e) {
         if (mounted) {
-          Navigator.of(context).pop(); // Close loading dialog
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error: $e'),
@@ -231,7 +183,13 @@ class _FinancialDashboardScreenState extends State<FinancialDashboardScreen> {
           authProvider.currentUser?.profilePhoto != null
               ? CircleAvatar(
                   radius: 30,
-                  backgroundImage: NetworkImage(authProvider.currentUser!.profilePhoto!),
+                  backgroundImage: NetworkImage(
+                    '${ApiConfig.storageBaseUrl}/${authProvider.currentUser!.profilePhoto!}?v=${authProvider.currentUser!.cacheBuster}',
+                    scale: 1.0,
+                  ),
+                  onBackgroundImageError: (exception, stackTrace) {
+                    print('Error loading dashboard profile photo: $exception');
+                  },
                 )
               : CircleAvatar(
                   radius: 30,
@@ -434,7 +392,6 @@ class _FinancialDashboardScreenState extends State<FinancialDashboardScreen> {
                 Icons.account_balance_wallet,
                 const Color(0xFFdcedc1),
                 () {
-                  Navigator.pushNamed(context, '/budget');
                 },
               ),
               _buildMenuCard(
@@ -459,6 +416,14 @@ class _FinancialDashboardScreenState extends State<FinancialDashboardScreen> {
                 const Color(0xFF0fd850),
                 () {
                   Navigator.pushNamed(context, '/financial-reports');
+                },
+              ),
+              _buildMenuCard(
+                'Tabungan',
+                Icons.savings,
+                const Color(0xFFffd166),
+                () {
+                  Navigator.pushNamed(context, '/savings-goals');
                 },
               ),
               _buildMenuCard(

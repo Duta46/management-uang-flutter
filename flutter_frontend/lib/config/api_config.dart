@@ -79,4 +79,16 @@ class ApiConfig {
         return development;
     }
   }
+
+  // Getter untuk storage base URL
+  static String get storageBaseUrl {
+    // Ambil base URL dan ganti '/api' dengan '/storage' atau ambil host dan tambahkan '/storage'
+    String baseUrl = ApiConfig.baseUrl;
+    if (baseUrl.contains('/api')) {
+      return baseUrl.replaceFirst('/api', '/storage');
+    } else {
+      // Jika tidak mengandung '/api', tambahkan '/storage' di akhir
+      return baseUrl.endsWith('/') ? '${baseUrl}storage' : '${baseUrl}/storage';
+    }
+  }
 }

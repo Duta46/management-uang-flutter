@@ -139,7 +139,10 @@ class _DailyTransactionScreenState extends State<DailyTransactionScreen> {
                             style: const TextStyle(fontWeight: FontWeight.w500),
                           ),
                           subtitle: Text(
-                            transaction.category?.name ?? 'Kategori Tidak Diketahui',
+                            transaction.category?.name ??
+                            transaction.savingsGoal?.name ??
+                            transaction.billReminder?.name ??
+                            'Kategori Tidak Diketahui',
                           ),
                           trailing: Text(
                             transaction.type == 'income' 

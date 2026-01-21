@@ -4,12 +4,15 @@ class User {
   final String email;
   final String token;
   final String? profilePhoto;
+  final int? cacheBuster; // Tambahkan ini untuk cache busting
+
   User({
     this.id,
     required this.name,
     required this.email,
     required this.token,
     this.profilePhoto,
+    this.cacheBuster,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -19,6 +22,7 @@ class User {
       email: _parseValueAsString(json['email']) ?? '',
       token: _parseValueAsString(json['token']) ?? '',
       profilePhoto: _parseValueAsString(json['profile_photo']),
+      cacheBuster: DateTime.now().millisecondsSinceEpoch, // Setiap kali dibuat, beri timestamp baru
     );
   }
 
@@ -55,6 +59,11 @@ class User {
     return null;
   }
 
+  // Getter untuk URL dengan cache busting
+  String? get profilePhotoWithCacheBust {
+    if (profilePhoto == null) return null;
+    return '${profilePhoto}?v=${cacheBuster}';
+  }
 
   Map<String, dynamic> toJson() {
     return {

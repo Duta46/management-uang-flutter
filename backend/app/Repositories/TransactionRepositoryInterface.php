@@ -15,4 +15,5 @@ interface TransactionRepositoryInterface
     public function delete(int $id, int $userId): bool;
     public function getTransactionsByDateRange(int $userId, string $startDate, string $endDate): Collection;
     public function getSummaryByMonth(int $userId, int $month, int $year): array;
+    public function getMonthlyTransactions(int $userId, int $month, int $year): array;
 }

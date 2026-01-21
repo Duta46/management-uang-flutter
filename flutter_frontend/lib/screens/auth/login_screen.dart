@@ -6,6 +6,7 @@ import '../../providers/bill_notification_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/error_handler.dart';
 import '../home/financial_dashboard_screen.dart';
+import '../main_navigation_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -310,9 +311,9 @@ class _LoginScreenState extends State<LoginScreen> {
         );
 
         if (success) {
-          // Navigate to financial dashboard screen after successful login
+          // Navigate to main navigation screen after successful login
           Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const FinancialDashboardScreen()),
+            MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
             (route) => false,
           );
 

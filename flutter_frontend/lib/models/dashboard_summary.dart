@@ -5,7 +5,6 @@ class DashboardSummary {
   final double variableExpenses;
   final double remainingBalance;
   final int daysLeft;
-  final double recommendedDailyBudget;
   final List<TopCategory> topCategories;
 
   DashboardSummary({
@@ -15,7 +14,6 @@ class DashboardSummary {
     required this.variableExpenses,
     required this.remainingBalance,
     required this.daysLeft,
-    required this.recommendedDailyBudget,
     required this.topCategories,
   });
 
@@ -34,7 +32,6 @@ class DashboardSummary {
       variableExpenses: (json['variable_expenses'] is int) ? json['variable_expenses'].toDouble() : json['variable_expenses'],
       remainingBalance: (json['remaining_balance'] is int) ? json['remaining_balance'].toDouble() : json['remaining_balance'],
       daysLeft: json['days_left'],
-      recommendedDailyBudget: (json['recommended_daily_budget'] is int) ? json['recommended_daily_budget'].toDouble() : json['recommended_daily_budget'],
       topCategories: topCategories,
     );
   }

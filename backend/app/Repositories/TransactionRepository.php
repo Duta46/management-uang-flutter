@@ -164,4 +164,16 @@ class TransactionRepository implements TransactionRepositoryInterface
             'balance' => $income - $expense
         ];
     }
+
+    public function getMonthlyTransactions(int $userId, int $month, int $year): array
+    {
+        $transactions = Transaction::where('user_id', $userId)
+            ->whereYear('date', $year)
+            ->whereMonth('date', $month)
+            ->with(['category'])
+            ->orderBy('date', 'desc')
+            ->get();
+
+        return $transactions->toArray();
+    }
 }

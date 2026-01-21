@@ -7,7 +7,6 @@ import '../config/api_config.dart';
 import '../models/user.dart';
 import '../models/category.dart';
 import '../models/transaction.dart';
-import '../models/budget.dart';
 import '../models/api_response.dart';
 import '../models/financial_summary.dart';
 
@@ -587,127 +586,9 @@ class DataService {
     }
   }
 
-  // Budget methods
-  static Future<BudgetApiResponse> getBudgets() async {
-    try {
-      final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/budgets'),
-        headers: await getHeaders(),
-      ).timeout(_timeout);
 
-      final data = jsonDecode(response.body);
-      return BudgetApiResponse.fromJson(data);
-    } catch (e) {
-      if (e is TimeoutException) {
-        return BudgetApiResponse(
-          success: false,
-          message: 'Request timeout: $e',
-          data: null,
-        );
-      } else {
-        return BudgetApiResponse(
-          success: false,
-          message: 'Network error: $e',
-          data: null,
-        );
-      }
-    }
-  }
 
-  static Future<BudgetApiResponse> createBudget({
-    required int categoryId,
-    required String amount,
-    required String month,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/budgets'),
-        headers: await getHeaders(),
-        body: jsonEncode({
-          'category_id': categoryId,
-          'amount': amount,
-          'month': month,
-        }),
-      ).timeout(_timeout);
 
-      final data = jsonDecode(response.body);
-      return BudgetApiResponse.fromJson(data);
-    } catch (e) {
-      if (e is TimeoutException) {
-        return BudgetApiResponse(
-          success: false,
-          message: 'Request timeout: $e',
-          data: null,
-        );
-      } else {
-        return BudgetApiResponse(
-          success: false,
-          message: 'Network error: $e',
-          data: null,
-        );
-      }
-    }
-  }
-
-  static Future<BudgetApiResponse> updateBudget({
-    required int id,
-    required int categoryId,
-    required String amount,
-    required String month,
-  }) async {
-    try {
-      final response = await http.put(
-        Uri.parse('${ApiConfig.baseUrl}/budgets/$id'),
-        headers: await getHeaders(),
-        body: jsonEncode({
-          'category_id': categoryId,
-          'amount': amount,
-          'month': month,
-        }),
-      ).timeout(_timeout);
-
-      final data = jsonDecode(response.body);
-      return BudgetApiResponse.fromJson(data);
-    } catch (e) {
-      if (e is TimeoutException) {
-        return BudgetApiResponse(
-          success: false,
-          message: 'Request timeout: $e',
-          data: null,
-        );
-      } else {
-        return BudgetApiResponse(
-          success: false,
-          message: 'Network error: $e',
-          data: null,
-        );
-      }
-    }
-  }
-
-  static Future<ApiResponse> deleteBudget(int id) async {
-    try {
-      final response = await http.delete(
-        Uri.parse('${ApiConfig.baseUrl}/budgets/$id'),
-        headers: await getHeaders(),
-      ).timeout(_timeout);
-
-      final data = jsonDecode(response.body);
-      return ApiResponse.fromJson(data);
-    } catch (e) {
-      if (e is TimeoutException) {
-        return ApiResponse(
-          success: false,
-          message: 'Request timeout: $e',
-        );
-      } else {
-        return ApiResponse(
-          success: false,
-          message: 'Network error: $e',
-        );
-      }
-    }
-  }
 
   // Financial summary methods
   static Future<FinancialSummaryResponse> getFinancialSummary({required int year, required int month}) async {

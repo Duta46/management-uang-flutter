@@ -392,28 +392,47 @@ class ApiRepository extends BaseRepository {
     try {
       FormData formData = FormData.fromMap({});
 
+      print('Debug: Preparing form data for profile update');
+      print('Debug: Name: $name, Email: $email, ProfileImage: $profileImage');
+
       if (name != null) {
         formData.fields.add(MapEntry('name', name));
+        print('Debug: Added name to form data');
       }
 
       if (email != null) {
         formData.fields.add(MapEntry('email', email));
+        print('Debug: Added email to form data');
       }
 
       if (profileImage != null) {
+        print('Debug: Profile image is not null: $profileImage');
         if (profileImage is MultipartFile) {
           formData.files.add(MapEntry('profile_photo', profileImage));
+          print('Debug: Added MultipartFile to form data');
         } else if (profileImage is String) {
           // If it's a file path, create MultipartFile from it
           File file = File(profileImage);
           String fileName = file.path.split('/').last;
+          print('Debug: Creating MultipartFile from path: ${file.path}, filename: $fileName');
           formData.files.add(MapEntry('profile_photo', await MultipartFile.fromFile(file.path, filename: fileName)));
+          print('Debug: Added file from path to form data');
+        } else {
+          print('Debug: Profile image is neither MultipartFile nor String: ${profileImage.runtimeType}');
         }
+      } else {
+        print('Debug: Profile image is null');
       }
 
-      final response = await dio.put('$baseUrl/auth/profile', data: formData);
+      print('Debug: About to send request to $baseUrl/auth/profile');
+      // Use POST instead of PUT for file uploads
+      final response = await dio.post('$baseUrl/auth/profile', data: formData);
+      print('Debug: Received response with status: ${response.statusCode}');
+      print('Debug: Response data: ${response.data}');
+
       return Response.ApiResponse.fromJson(response.data);
     } catch (e, stackTrace) {
+      print('Debug: Error in updateProfileWithPhoto: $e');
       final exception = ErrorHandler.handle(e, stackTrace);
       return Response.ApiResponse.error(message: exception.message);
     }
@@ -724,6 +743,76 @@ class ApiRepository extends BaseRepository {
     } catch (e, stackTrace) {
       final exception = ErrorHandler.handle(e, stackTrace);
       return Response.ApiResponse.error(message: exception.message);
+    }
+  }
+
+  /*
+   * Get comprehensive financial report for specific month
+   * Fetches detailed financial report data based on the specified period and month
+   */
+  Future<Response.ApiResponse> getComprehensiveReportForSpecificMonth(String period, String? monthYear) async {
+    try {
+      // Parse month and year from monthYear string (format: "Januari 2026")
+      Map<String, dynamic>? queryParameters = {'period': period};
+
+      if (monthYear != null && monthYear.isNotEmpty) {
+        // Split the monthYear string to extract month and year
+        List<String> parts = monthYear.split(' ');
+        print('DEBUG API: Split monthYear: $monthYear, parts: $parts');
+
+        if (parts.length >= 2) {
+          String monthName = parts[0];
+          String year = parts[1];
+          print('DEBUG API: Extracted monthName: $monthName, year: $year');
+
+          // Convert month name to number
+          int monthNumber = _getMonthNumberFromName(monthName);
+          print('DEBUG API: Converted monthNumber: $monthNumber');
+
+          if (monthNumber > 0) {
+            queryParameters['year'] = year;
+            queryParameters['month'] = monthNumber.toString().padLeft(2, '0'); // Format as MM
+            print('DEBUG API: Added to query params - year: $year, month: ${queryParameters['month']}');
+          } else {
+            print('DEBUG API: Invalid month name: $monthName');
+          }
+        } else {
+          print('DEBUG API: Invalid monthYear format: $monthYear, parts length: ${parts.length}');
+        }
+      }
+
+      print('DEBUG API: Request URL: $baseUrl/financial-reports/comprehensive');
+      print('DEBUG API: Query parameters: $queryParameters');
+
+      final response = await dio.get(
+        '$baseUrl/financial-reports/comprehensive',
+        queryParameters: queryParameters,
+      );
+      print('DEBUG API: Response status: ${response.statusCode}');
+      print('DEBUG API: Response data: ${response.data}');
+
+      return Response.ApiResponse.fromJson(response.data);
+    } catch (e, stackTrace) {
+      final exception = ErrorHandler.handle(e, stackTrace);
+      return Response.ApiResponse.error(message: exception.message);
+    }
+  }
+
+  int _getMonthNumberFromName(String monthName) {
+    switch (monthName.toLowerCase()) {
+      case 'januari': return 1;
+      case 'februari': return 2;
+      case 'maret': return 3;
+      case 'april': return 4;
+      case 'mei': return 5;
+      case 'juni': return 6;
+      case 'juli': return 7;
+      case 'agustus': return 8;
+      case 'september': return 9;
+      case 'oktober': return 10;
+      case 'november': return 11;
+      case 'desember': return 12;
+      default: return 0;
     }
   }
 

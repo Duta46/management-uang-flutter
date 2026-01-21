@@ -189,19 +189,8 @@ class AuthProvider extends ChangeNotifier {
       );
 
       if (response.success && response.data != null) {
-        final userData = response.data!['user'];
-
-        // Update current user data
-        _currentUser = User(
-          id: _currentUser?.id,
-          name: userData['name'] ?? _currentUser?.name ?? '',
-          email: userData['email'] ?? _currentUser?.email ?? '',
-          token: _currentUser?.token ?? '',
-          profilePhoto: userData['profile_photo'] ?? _currentUser?.profilePhoto, // Maintain the roles
-        );
-
-        // Save updated user to storage
-        await _authService.saveUser(_currentUser!);
+        // Refresh user profile to get the latest data from the server
+        await refreshUserProfile();
 
         setMessage('Profil berhasil diperbarui');
         setLoading(false);
@@ -224,19 +213,23 @@ class AuthProvider extends ChangeNotifier {
       final response = await _apiRepository.getProfile();
 
       if (response.success && response.data != null) {
-        final userData = response.data!['user'];
+        // Pastikan data user ada sebelum mengaksesnya
+        final userData = response.data?['user'];
 
-        _currentUser = User(
-          id: userData['id'],
-          name: userData['name'] ?? _currentUser?.name ?? '',
-          email: userData['email'] ?? _currentUser?.email ?? '',
-          token: _currentUser?.token ?? '',
-          profilePhoto: userData['profile_photo'] ?? _currentUser?.profilePhoto,
-        );
+        if (userData != null) {
+          _currentUser = User(
+            id: userData['id'],
+            name: userData['name'] ?? _currentUser?.name ?? '',
+            email: userData['email'] ?? _currentUser?.email ?? '',
+            token: _currentUser?.token ?? '',
+            profilePhoto: userData['profile_photo'], // Biarkan null jika tidak ada
+            cacheBuster: DateTime.now().millisecondsSinceEpoch, // Force cache busting
+          );
 
-        await _authService.saveUser(_currentUser!);
-        notifyListeners();
-        return true;
+          await _authService.saveUser(_currentUser!);
+          notifyListeners(); // Ini akan memicu rebuild semua widget yang bergantung
+          return true;
+        }
       }
       return false;
     } catch (e) {

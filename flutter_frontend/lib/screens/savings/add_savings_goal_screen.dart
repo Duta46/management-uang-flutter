@@ -30,202 +30,179 @@ class _AddSavingsGoalScreenState extends State<AddSavingsGoalScreen> {
     final savingsGoalProvider = Provider.of<SavingsGoalProvider>(context);
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF667eea), // Biru keunguan
-              Color(0xFF764ba2), // Ungu
-              Color(0xFFc3a1d9), // Ungu lembut
-            ],
-          ),
+      backgroundColor: Theme.of(context).colorScheme.background,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).cardTheme.color,
+        foregroundColor: Theme.of(context).textTheme.titleLarge?.color,
+        elevation: 0,
+        title: const Text('Tambah Target Tabungan'),
+        iconTheme: IconThemeData(
+          color: Theme.of(context).textTheme.titleLarge?.color,
         ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Nama Target Tabungan
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardTheme.color,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 5,
+                        offset: const Offset(0, 2),
                       ),
-                      child: IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () => Navigator.pop(context),
-                      ),
+                    ],
+                  ),
+                  child: TextFormField(
+                    controller: _nameController,
+                    style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+                    decoration: const InputDecoration(
+                      labelText: 'Nama Target Tabungan',
+                      hintText: 'Contoh: Liburan ke Bali',
+                      prefixIcon: Icon(Icons.savings),
+                      border: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      enabledBorder: InputBorder.none,
                     ),
-                    const SizedBox(width: 16),
-                    const Text(
-                      'Tambah Target Tabungan',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 18,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.grey.shade300,
-                              ),
-                            ),
-                            child: TextFormField(
-                              controller: _nameController,
-                              style: const TextStyle(color: Colors.black),
-                              decoration: const InputDecoration(
-                                labelText: 'Nama Target Tabungan',
-                                labelStyle: TextStyle(color: Colors.black87),
-                                hintText: 'Contoh: Liburan ke Bali',
-                                hintStyle: TextStyle(color: Colors.grey),
-                                prefixIcon: Icon(Icons.savings, color: Colors.grey),
-                                border: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                              ),
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Nama target tabungan wajib diisi';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.grey.shade300,
-                              ),
-                            ),
-                            child: TextFormField(
-                              controller: _descriptionController,
-                              style: const TextStyle(color: Colors.black),
-                              decoration: const InputDecoration(
-                                labelText: 'Deskripsi',
-                                labelStyle: TextStyle(color: Colors.black87),
-                                hintText: 'Deskripsi tambahan (opsional)',
-                                hintStyle: TextStyle(color: Colors.grey),
-                                prefixIcon: Icon(Icons.description, color: Colors.grey),
-                                border: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                              ),
-                              maxLines: 3,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.grey.shade300,
-                              ),
-                            ),
-                            child: TextFormField(
-                              controller: _targetAmountController,
-                              style: const TextStyle(color: Colors.black),
-                              decoration: const InputDecoration(
-                                labelText: 'Jumlah Target',
-                                labelStyle: TextStyle(color: Colors.black87),
-                                hintText: 'Rp',
-                                hintStyle: TextStyle(color: Colors.grey),
-                                prefixIcon: Icon(Icons.attach_money, color: Colors.grey),
-                                border: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                              ),
-                              keyboardType: TextInputType.number,
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Jumlah target wajib diisi';
-                                }
-                                final amount = double.tryParse(value);
-                                if (amount == null || amount <= 0) {
-                                  return 'Masukkan jumlah yang valid';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.grey.shade300,
-                              ),
-                            ),
-                            child: ListTile(
-                              title: Text(
-                                _targetDate != null
-                                    ? 'Tanggal Target: ${_formatDate(_targetDate!)}'
-                                    : 'Pilih Tanggal Target',
-                                style: TextStyle(
-                                  color: _targetDate != null
-                                      ? Colors.black87
-                                      : Colors.grey,
-                                ),
-                              ),
-                              trailing: const Icon(Icons.calendar_today, color: Colors.grey),
-                              onTap: _selectTargetDate,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 50,
-                            child: ElevatedButton(
-                              onPressed: savingsGoalProvider.isLoading
-                                  ? null
-                                  : _submitForm,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF764ba2),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: savingsGoalProvider.isLoading
-                                  ? const CircularProgressIndicator(color: Colors.white)
-                                  : const Text('Simpan Target Tabungan'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Nama target tabungan wajib diisi';
+                      }
+                      return null;
+                    },
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                // Deskripsi
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardTheme.color,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 5,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: TextFormField(
+                    controller: _descriptionController,
+                    style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+                    decoration: const InputDecoration(
+                      labelText: 'Deskripsi',
+                      hintText: 'Deskripsi tambahan (opsional)',
+                      prefixIcon: Icon(Icons.description),
+                      border: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                    ),
+                    maxLines: 3,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Jumlah Target
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardTheme.color,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 5,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: TextFormField(
+                    controller: _targetAmountController,
+                    style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+                    decoration: const InputDecoration(
+                      labelText: 'Jumlah Target',
+                      hintText: 'Rp',
+                      prefixIcon: Icon(Icons.attach_money),
+                      border: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                    ),
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Jumlah target wajib diisi';
+                      }
+                      final amount = double.tryParse(value);
+                      if (amount == null || amount <= 0) {
+                        return 'Masukkan jumlah yang valid';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Tanggal Target
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardTheme.color,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 5,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: ListTile(
+                    title: Text(
+                      _targetDate != null
+                          ? 'Tanggal Target: ${_formatDate(_targetDate!)}'
+                          : 'Pilih Tanggal Target',
+                      style: TextStyle(
+                        color: _targetDate != null
+                            ? Theme.of(context).textTheme.bodyLarge?.color
+                            : Theme.of(context).textTheme.bodyMedium?.color,
+                      ),
+                    ),
+                    trailing: const Icon(Icons.calendar_today),
+                    onTap: _selectTargetDate,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Tombol Simpan
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: savingsGoalProvider.isLoading
+                        ? null
+                        : _submitForm,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: savingsGoalProvider.isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text('Simpan Target Tabungan'),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

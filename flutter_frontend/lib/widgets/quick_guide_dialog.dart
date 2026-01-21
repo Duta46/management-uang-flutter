@@ -40,8 +40,6 @@ class QuickGuideDialog extends StatelessWidget {
             const SizedBox(height: 12),
             _buildGuideItem(
               Icons.pie_chart_outline,
-              'Atur Anggaran',
-              'Kelola pengeluaran bulanan Anda di menu Anggaran',
             ),
             const SizedBox(height: 12),
             _buildGuideItem(

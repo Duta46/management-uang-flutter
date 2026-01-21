@@ -155,7 +155,10 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                transaction.category?.name ?? 'Tanpa Kategori',
+                                transaction.category?.name ??
+                                transaction.savingsGoal?.name ??
+                                transaction.billReminder?.name ??
+                                'Tanpa Kategori',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
