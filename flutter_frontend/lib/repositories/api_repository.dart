@@ -8,7 +8,9 @@ import 'base_repository.dart';
 
 class ApiRepository extends BaseRepository {
   String get baseUrl {
-    return ApiConfig.baseUrl;
+    String url = ApiConfig.baseUrl;
+    print('ApiRepository: Current baseUrl is $url');
+    return url;
   }
 
   @override
@@ -575,14 +577,22 @@ class ApiRepository extends BaseRepository {
    */
   Future<Response.ApiResponse> askChatbotQuestion(String question) async {
     try {
+      print('Making request to: $baseUrl/chatbot/ask');
+      print('Request data: {"question": "$question"}');
+
       final response = await dio.post(
         '$baseUrl/chatbot/ask',
         data: {
           'question': question,
         },
       );
+
+      print('Received response: ${response.data}');
+      print('Response status: ${response.statusCode}');
+
       return Response.ApiResponse.fromJson(response.data);
     } catch (e, stackTrace) {
+      print('Error in askChatbotQuestion: $e');
       final exception = ErrorHandler.handle(e, stackTrace);
       return Response.ApiResponse.error(message: exception.message);
     }

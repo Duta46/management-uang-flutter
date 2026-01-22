@@ -32,14 +32,26 @@ class FinancialChatbotController extends Controller
         $userId = auth()->id();
         $question = $request->input('question');
 
-        $response = $this->chatbotService->processQuestion($userId, $question);
+        try {
+            $response = $this->chatbotService->processQuestion($userId, $question);
 
-        return response()->json([
-            'success' => $response['success'],
-            'answer' => $response['answer'],
-            'intent' => $response['intent'] ?? null,
-            'message' => $response['success'] ? 'Pertanyaan berhasil diproses' : 'Gagal memproses pertanyaan'
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'answer' => $response['answer'],
+                    'intent' => $response['intent'] ?? null,
+                ],
+                'message' => 'Pertanyaan berhasil diproses'
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Chatbot error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'data' => null,
+                'message' => 'Terjadi kesalahan server. Silakan coba lagi nanti.'
+            ], 500);
+        }
     }
 
     /**

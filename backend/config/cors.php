@@ -20,7 +20,7 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        'https://street-counseling-pdf-legislative.trycloudflare.com',
+        'https://dozens-mass-dude-quality.trycloudflare.com',
     ],
 
     'allowed_origins_patterns' => [],

@@ -19,6 +19,7 @@ class ApiResponse<T> {
     T Function(dynamic)? dataMapper,
   }) {
     if (json == null) {
+      print('ApiResponse.fromJson: json is null');
       return ApiResponse<T>(
         success: false,
         message: 'Response is null',
@@ -27,13 +28,18 @@ class ApiResponse<T> {
 
     // Ensure json is a Map before accessing properties
     if (json is! Map<String, dynamic>) {
+      print('ApiResponse.fromJson: json is not Map<String, dynamic>, got: ${json.runtimeType}');
       return ApiResponse<T>(
         success: false,
         message: 'Invalid response format: expected Map<String, dynamic>',
       );
     }
 
+    print('ApiResponse.fromJson: received json: $json');
+
     final data = json['data'];
+    print('ApiResponse.fromJson: extracted data: $data');
+
     final mappedData = dataMapper != null && data != null ? dataMapper(data) : data;
 
     return ApiResponse<T>(

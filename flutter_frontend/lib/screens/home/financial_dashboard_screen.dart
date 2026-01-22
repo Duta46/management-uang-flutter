@@ -388,13 +388,6 @@ class _FinancialDashboardScreenState extends State<FinancialDashboardScreen> {
                 },
               ),
               _buildMenuCard(
-                'Anggaran',
-                Icons.account_balance_wallet,
-                const Color(0xFFdcedc1),
-                () {
-                },
-              ),
-              _buildMenuCard(
                 'Kategori',
                 Icons.category,
                 const Color(0xFFf093fb),
@@ -410,6 +403,8 @@ class _FinancialDashboardScreenState extends State<FinancialDashboardScreen> {
                   Navigator.pushNamed(context, '/bill-reminders');
                 },
               ),
+              // Card kosong untuk menjaga tata letak grid tetap seimbang
+              Container(),
               _buildMenuCard(
                 'Laporan',
                 Icons.bar_chart,

@@ -4,7 +4,7 @@ import '../providers/auth_provider_change_notifier.dart';
 import '../screens/home/daily_transaction_screen.dart';
 import '../screens/home/monthly_finance_screen.dart';
 import '../screens/home/financial_dashboard_screen.dart';
-import '../screens/coming_soon_screen.dart';
+import '../screens/financial_chatbot_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/savings/savings_goal_screen.dart';
 
@@ -22,7 +22,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     const DailyTransactionScreen(),
     const MonthlyFinanceScreen(),
     const FinancialDashboardScreen(),
-    const ComingSoonScreen(featureName: 'Analyst AI', description: 'Fitur ini akan memberikan analisis mendalam, rekomendasi, dan prediksi keuangan menggunakan teknologi AI.'),
+    const FinancialChatbotScreen(),
     const ProfileScreen(),
   ];
 
@@ -30,7 +30,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     'Transaksi Harian',
     'Keuangan Bulanan',
     'Dashboard',
-    'Analyst AI',
+    'Asisten Keuangan',
     'Profil',
   ];
 
@@ -42,39 +42,70 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    bool isChatbotScreen = _selectedIndex == 3;
+
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
         children: _pages,
       ),
-      bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 6.0,
-        child: SizedBox(
-          height: 56, // Reduced height
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildBottomNavItem(0, Icons.calendar_today, 'Harian'),
-              _buildBottomNavItem(1, Icons.bar_chart, 'Bulanan'),
-              const SizedBox(width: 10), // Spacer for the floating action button
-              _buildBottomNavItem(3, Icons.psychology, 'AI'),
-              _buildBottomNavItem(4, Icons.person, 'Profil'),
-            ],
-          ),
+      bottomNavigationBar: isChatbotScreen
+          ? _buildChatbotBottomAppBar() // BottomAppBar khusus untuk layar chatbot
+          : _buildNormalBottomAppBar(), // BottomAppBar normal untuk layar lainnya
+      floatingActionButton: !isChatbotScreen // Sembunyikan FAB saat di layar chatbot (indeks 3)
+          ? FloatingActionButton(
+              onPressed: () {
+                setState(() {
+                  _selectedIndex = 2; // Index for dashboard (already the default)
+                });
+              },
+              backgroundColor: Theme.of(context).primaryColor,
+              child: const Icon(Icons.home, color: Colors.white),
+              elevation: 4.0,
+            )
+          : null, // Tidak menampilkan FAB saat di layar chatbot
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+    );
+  }
+
+  // BottomAppBar khusus untuk layar chatbot (tanpa notch dan FAB)
+  Widget _buildChatbotBottomAppBar() {
+    return BottomAppBar(
+      shape: null, // Tidak ada notch
+      notchMargin: 6.0,
+      child: SizedBox(
+        height: 56, // Reduced height
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly, // Gunakan spaceEvenly untuk distribusi yang lebih merata
+          children: [
+            _buildBottomNavItem(0, Icons.calendar_today, 'Harian'),
+            _buildBottomNavItem(1, Icons.bar_chart, 'Bulanan'),
+            _buildBottomNavItem(3, Icons.psychology, 'Chatbot'), // Tetap tampilkan item chatbot karena sedang aktif
+            _buildBottomNavItem(4, Icons.person, 'Profil'),
+          ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          setState(() {
-            _selectedIndex = 2; // Index for dashboard (already the default)
-          });
-        },
-        backgroundColor: Theme.of(context).primaryColor,
-        child: const Icon(Icons.home, color: Colors.white),
-        elevation: 4.0,
+    );
+  }
+
+  // BottomAppBar normal untuk layar lainnya (dengan notch untuk FAB)
+  Widget _buildNormalBottomAppBar() {
+    return BottomAppBar(
+      shape: const CircularNotchedRectangle(), // Ada notch untuk FAB
+      notchMargin: 6.0,
+      child: SizedBox(
+        height: 56, // Reduced height
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildBottomNavItem(0, Icons.calendar_today, 'Harian'),
+            _buildBottomNavItem(1, Icons.bar_chart, 'Bulanan'),
+            const SizedBox(width: 10), // Spacer untuk FAB
+            _buildBottomNavItem(3, Icons.psychology, 'Chatbot'),
+            _buildBottomNavItem(4, Icons.person, 'Profil'),
+          ],
+        ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 

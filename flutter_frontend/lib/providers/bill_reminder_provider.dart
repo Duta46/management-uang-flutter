@@ -14,6 +14,16 @@ class BillReminderProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String get message => _message;
 
+  List<BillReminder> get activeBills {
+    final now = DateTime.now();
+    return _billReminders.where((bill) =>
+      bill.dueDate != null &&
+      bill.dueDate!.isNotEmpty &&
+      DateTime.tryParse(bill.dueDate!)!.isAfter(now) &&
+      bill.isPaid != true
+    ).toList();
+  }
+
   Future<void> fetchBillReminders() async {
     _isLoading = true;
     notifyListeners();

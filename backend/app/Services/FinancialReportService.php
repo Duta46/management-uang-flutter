@@ -9,9 +9,17 @@ use App\Models\Transaction;
 use App\Models\Category;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class FinancialReportService
 {
+    private TransactionServiceInterface $transactionService;
+
+    public function __construct(TransactionServiceInterface $transactionService)
+    {
+        $this->transactionService = $transactionService;
+    }
+
     /**
      * Generate financial summary for a user
      */
@@ -97,13 +105,23 @@ class FinancialReportService
             throw $e;
         }
 
-        // Budget summary
-        $budgets = Budget::where('user_id', $userId)
-            ->where('month', $startDate->format('Y-m'))
-            ->get();
+        // Budget summary - hanya jika tabel budgets ada
+        $totalBudgeted = 0;
+        $totalSpent = 0;
 
-        $totalBudgeted = $budgets->sum('amount');
-        $totalSpent = $budgets->sum('spent_amount');
+        try {
+            // Periksa apakah tabel budgets ada
+            if (Schema::hasTable('budgets')) {
+                $budgets = Budget::where('user_id', $userId)
+                    ->where('month', $startDate->format('Y-m'))
+                    ->get();
+
+                $totalBudgeted = $budgets->sum('amount');
+                $totalSpent = $budgets->sum('spent_amount');
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Budgets table not accessible', ['error' => $e->getMessage()]);
+        }
 
         // Savings goals progress
         $savingsGoals = SavingsGoal::where('user_id', $userId)
@@ -130,8 +148,7 @@ class FinancialReportService
         try {
             if ($this->validateMonthYear($year, $month)) {
                 // Ambil transaksi untuk bulan dan tahun yang ditentukan
-                $transactionService = app(TransactionServiceInterface::class);
-                $transactions = $transactionService->getMonthlyTransactions($userId, $month, $year);
+                $transactions = $this->transactionService->getMonthlyTransactions($userId, $month, $year);
             } else {
                 // Ambil transaksi untuk periode yang ditentukan
                 $transactions = Transaction::where('user_id', $userId)
@@ -243,6 +260,12 @@ class FinancialReportService
      */
     public function getBudgetVsActual(int $userId, string $period = 'monthly', ?int $year = null, ?int $month = null)
     {
+        // Periksa apakah tabel budgets ada
+        if (!Schema::hasTable('budgets')) {
+            \Log::info('Budgets table does not exist, returning empty array for budget comparison');
+            return [];
+        }
+
         try {
             // Jika tahun dan bulan disediakan, kita prioritaskan itu daripada period
             if ($this->validateMonthYear($year, $month)) {
@@ -270,15 +293,15 @@ class FinancialReportService
 
         foreach ($budgets as $budget) {
             $categoryName = $budget->category ? $budget->category->name : 'Uncategorized';
-            
+
             $results[] = [
                 'category' => $categoryName,
                 'budgeted' => $budget->amount,
                 'spent' => $budget->spent_amount,
                 'remaining' => $budget->amount - $budget->spent_amount,
                 'overspent' => max(0, $budget->spent_amount - $budget->amount),
-                'percentage_used' => $budget->amount > 0 
-                    ? round(($budget->spent_amount / $budget->amount) * 100, 2) 
+                'percentage_used' => $budget->amount > 0
+                    ? round(($budget->spent_amount / $budget->amount) * 100, 2)
                     : 0
             ];
         }

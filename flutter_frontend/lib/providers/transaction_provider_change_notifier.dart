@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../repositories/api_repository.dart';
 import '../models/transaction.dart';
+import '../models/category.dart' as CategoryModel;
 import '../models/api_response.dart' as Response;
 import 'global_providers.dart';
 
@@ -298,12 +299,23 @@ class TransactionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  List<CategoryModel.Category> get categories {
+    // Extract unique categories from transactions
+    final uniqueCategories = <int, CategoryModel.Category>{};
+    for (final transaction in _transactions) {
+      if (transaction.category != null && !uniqueCategories.containsKey(transaction.category!.id)) {
+        uniqueCategories[transaction.category!.id!] = transaction.category!;
+      }
+    }
+    return uniqueCategories.values.toList();
+  }
+
   // Clear the fetched flag if needed
   void resetFetchState() {
     _hasFetched = false;
     _lastFetchTime = null;
   }
-  
+
   // Dispose method to clean up resources
   @override
   void dispose() {

@@ -51,6 +51,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(BillReminderService::class, BillReminderService::class);
         $this->app->bind(BudgetRepositoryInterface::class, BudgetRepository::class);
         $this->app->bind(BudgetService::class, BudgetService::class);
+        $this->app->bind(\App\Services\FinancialReportService::class, \App\Services\FinancialReportService::class);
         // $this->app->singleton(GeminiService::class, function ($app) {
         //     return new GeminiService();
         // });

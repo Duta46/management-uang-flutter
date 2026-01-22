@@ -35,7 +35,8 @@ import 'screens/bill_reminder/edit_bill_reminder_screen.dart';
 import 'screens/reports/financial_report_screen.dart';
 import 'screens/financial_health/financial_health_screen.dart';
 import 'screens/financial_notifications/financial_notifications_screen.dart';
-import 'screens/coming_soon_screen.dart'; // New coming soon screen
+import 'screens/financial_chatbot_screen.dart'; // New coming soon screen
+import 'screens/coming_soon_screen.dart'; // Coming soon screen
 import 'screens/other_features_screen.dart'; // Other features screen
 import 'screens/help_screen.dart'; // Help screen
 import 'screens/main_navigation_screen.dart'; // Main navigation screen
@@ -134,7 +135,7 @@ class MyApp extends StatelessWidget {
               locale: const Locale('id', 'ID'), // Set default locale ke Indonesia
               home: _buildHomeScreen(context),
               routes: {
-                // '/chatbot': (context) => const FinancialChatbotScreen(), // AI feature commented out
+                '/chatbot': (context) => const FinancialChatbotScreen(),
                 // '/ollama': (context) => const OllamaScreen(), // AI feature commented out
                 // '/ollama-chatbot': (context) => const OllamaFinancialChatbotScreen(), // AI feature commented out
                 '/savings-goals': (context) => const SavingsGoalScreen(),
@@ -145,15 +146,15 @@ class MyApp extends StatelessWidget {
                 '/transactions': (context) => const TransactionListScreen(),
                 '/add-transaction': (context) => const TransactionFormScreen(),
                 '/financial-reports': (context) => const FinancialReportScreen(),
-                '/financial-insights': (context) => const ComingSoonScreen(
+                '/financial-insights': (context) => ComingSoonScreen(
                   featureName: 'Analyst AI',
                   description: 'Fitur ini akan memberikan analisis mendalam, rekomendasi, dan prediksi keuangan menggunakan teknologi AI.',
                 ),
-                '/financial-recommendations': (context) => const ComingSoonScreen(
+                '/financial-recommendations': (context) => ComingSoonScreen(
                   featureName: 'Analyst AI',
                   description: 'Dapatkan rekomendasi personal untuk mengelola keuangan Anda dengan lebih efektif menggunakan AI.',
                 ),
-                '/financial-predictions': (context) => const ComingSoonScreen(
+                '/financial-predictions': (context) => ComingSoonScreen(
                   featureName: 'Analyst AI',
                   description: 'Prediksi kondisi keuangan Anda di masa depan berdasarkan tren saat ini menggunakan AI.',
                 ),

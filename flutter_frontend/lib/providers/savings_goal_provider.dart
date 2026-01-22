@@ -14,6 +14,10 @@ class SavingsGoalProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String get message => _message;
 
+  List<SavingsGoal> get activeSavingsGoals {
+    return _savingsGoals.where((goal) => goal.status != 'completed' && goal.status != 'achieved').toList();
+  }
+
   Future<void> fetchSavingsGoals() async {
     _isLoading = true;
     notifyListeners();
