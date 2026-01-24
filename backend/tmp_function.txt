@@ -1,0 +1,31 @@
+    public function processQuestion(?int $userId, string $question): array
+    {
+        // First, try to extract financial intent from the question
+        $intent = $this->analyzeQuestionIntent($question);
+
+        if ($intent['type'] !== 'unknown' && $userId !== null) {
+            // Process the specific financial query only if user is authenticated
+            $result = $this->processSpecificQuery($userId, $question, $intent);
+
+            if ($result) {
+                // Save the conversation
+                $this->saveConversation($userId, $question, $result, $intent);
+
+                return [
+                    'success' => true,
+                    'answer' => $result,
+                    'intent' => $intent
+                ];
+            }
+        }
+
+        // If specific processing fails or user is not authenticated, use general response
+        $response = $this->getGeneralResponse($userId ?? 0, $question);
+
+        // Save the conversation only if user is authenticated
+        if ($userId !== null) {
+            $this->saveConversation($userId, $question, $response['answer'], $response['intent'] ?? []);
+        }
+
+        return $response;
+    }

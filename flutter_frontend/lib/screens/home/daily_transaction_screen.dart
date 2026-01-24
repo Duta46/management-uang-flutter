@@ -138,11 +138,12 @@ class _DailyTransactionScreenState extends State<DailyTransactionScreen> {
                             transaction.description ?? 'Transaksi Tanpa Nama',
                             style: const TextStyle(fontWeight: FontWeight.w500),
                           ),
-                          subtitle: Text(
-                            transaction.category?.name ??
-                            transaction.savingsGoal?.name ??
-                            transaction.billReminder?.name ??
-                            'Kategori Tidak Diketahui',
+                          subtitle: Consumer<TransactionProvider>(
+                            builder: (context, transactionProvider, child) {
+                              return Text(
+                                transactionProvider.getTransactionName(transaction),
+                              );
+                            },
                           ),
                           trailing: Text(
                             transaction.type == 'income' 

@@ -11,5 +11,5 @@ interface FinancialChatbotServiceInterface
     /**
      * Process user's financial question and return answer using Qwen AI via OpenRouter
      */
-    public function processQuestion(int $userId, string $question): array;
+    public function processQuestion(?int $userId, string $question): array;
 }

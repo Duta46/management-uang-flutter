@@ -20,7 +20,7 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        'https://dozens-mass-dude-quality.trycloudflare.com',
+        'https://cited-drop-serve-congress.trycloudflare.com',
     ],
 
     'allowed_origins_patterns' => [],

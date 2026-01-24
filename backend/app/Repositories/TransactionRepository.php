@@ -10,7 +10,7 @@ class TransactionRepository implements TransactionRepositoryInterface
 {
     public function getAll(int $userId, array $filters = []): LengthAwarePaginator
     {
-        $query = Transaction::where('user_id', $userId)->with(['category']);
+        $query = Transaction::where('user_id', $userId)->with(['category', 'billReminder', 'savingsGoal']);
 
         if (isset($filters['type'])) {
             $query->where('type', $filters['type']);
@@ -23,7 +23,6 @@ class TransactionRepository implements TransactionRepositoryInterface
         if (isset($filters['category_id'])) {
             $query->where('category_id', $filters['category_id']);
         }
-
         return $query->orderBy('date', 'desc')->paginate($filters['per_page'] ?? 15);
     }
 
@@ -31,7 +30,7 @@ class TransactionRepository implements TransactionRepositoryInterface
     {
         return Transaction::where('id', $id)
             ->where('user_id', $userId)
-            ->with(['category'])
+            ->with(['category', 'billReminder', 'savingsGoal'])
             ->first();
     }
 
@@ -74,7 +73,7 @@ class TransactionRepository implements TransactionRepositoryInterface
         \Log::info('Repository: Transaction created', ['id' => $transaction->id]);
 
         // Refresh model untuk memuat relasi yang valid
-        $transaction->load('category');
+        $transaction->load(['category', 'billReminder', 'savingsGoal']);
 
         return $transaction;
     }
@@ -117,7 +116,7 @@ class TransactionRepository implements TransactionRepositoryInterface
             $transaction->update($data);
 
             // Refresh model untuk memuat relasi yang valid
-            $transaction->load('category');
+            $transaction->load(['category', 'billReminder', 'savingsGoal']);
 
             return $transaction;
         }
@@ -128,7 +127,7 @@ class TransactionRepository implements TransactionRepositoryInterface
     public function delete(int $id, int $userId): bool
     {
         $transaction = $this->getById($id, $userId);
-        
+
         if ($transaction) {
             return $transaction->delete();
         }
@@ -140,7 +139,7 @@ class TransactionRepository implements TransactionRepositoryInterface
     {
         return Transaction::where('user_id', $userId)
             ->whereBetween('date', [$startDate, $endDate])
-            ->with(['category'])
+            ->with(['category', 'billReminder', 'savingsGoal'])
             ->get();
     }
 
@@ -170,7 +169,7 @@ class TransactionRepository implements TransactionRepositoryInterface
         $transactions = Transaction::where('user_id', $userId)
             ->whereYear('date', $year)
             ->whereMonth('date', $month)
-            ->with(['category'])
+            ->with(['category', 'billReminder', 'savingsGoal'])
             ->orderBy('date', 'desc')
             ->get();
 

@@ -33,13 +33,13 @@ class FinancialChatbotService implements FinancialChatbotServiceInterface
     /**
      * Process user's financial question and return answer using Qwen AI via OpenRouter
      */
-    public function processQuestion(int $userId, string $question): array
+    public function processQuestion(?int $userId, string $question): array
     {
         // First, try to extract financial intent from the question
         $intent = $this->analyzeQuestionIntent($question);
 
-        if ($intent['type'] !== 'unknown') {
-            // Process the specific financial query
+        if ($intent['type'] !== 'unknown' && $userId !== null) {
+            // Process the specific financial query only if user is authenticated
             $result = $this->processSpecificQuery($userId, $question, $intent);
 
             if ($result) {
@@ -54,11 +54,13 @@ class FinancialChatbotService implements FinancialChatbotServiceInterface
             }
         }
 
-        // If specific processing fails, use Qwen AI via OpenRouter for general response
-        $response = $this->getGeneralResponse($userId, $question);
+        // If specific processing fails or user is not authenticated, use general response
+        $response = $this->getGeneralResponse($userId ?? 0, $question);
 
-        // Save the conversation
-        $this->saveConversation($userId, $question, $response['answer'], $response['intent'] ?? []);
+        // Save the conversation only if user is authenticated
+        if ($userId !== null) {
+            $this->saveConversation($userId, $question, $response['answer'], $response['intent'] ?? []);
+        }
 
         return $response;
     }
@@ -91,6 +93,17 @@ class FinancialChatbotService implements FinancialChatbotServiceInterface
             'future_transactions' => [
                 'keywords' => ['transaksi bulan depan', 'tunjukkan transaksi bulan depan', 'uang bulan depan', 'rencana pengeluaran bulan depan', 'rencana pemasukan bulan depan']
             ],
+            'next_month_prediction' => [
+                'keywords' => ['prediksi bulan depan', 'proyeksi keuangan bulan depan', 'ramalan pengeluaran bulan depan', 'prediksi pengeluaran bulan depan', 'proyeksi pengeluaran bulan depan', 'prediksi keuangan bulan depan', 'analisis bulan depan', 'wawasan bulan depan', 'perkiraan keuangan bulan depan', 'proyeksi ke depan']
+            ],
+            'date_filtered_data' => [
+                'keywords' => ['data bulan', 'transaksi bulan', 'keuangan bulan', 'pengeluaran bulan', 'pemasukan bulan', 'riwayat bulan', 'uang bulan', 'data tahun', 'transaksi tahun', 'keuangan tahun', 'pengeluaran tahun', 'pemasukan tahun', 'uang tahun'],
+                'year_patterns' => ['2024', '2025', '2026', '2027', '2028', '2029', '2030', 'tahun ini', 'tahun depan', 'tahun lalu'],
+                'time_patterns' => ['januari', 'februari', 'maret', 'april', 'mei', 'juni', 'juli', 'agustus', 'september', 'oktober', 'november', 'desember', 'bulan ini', 'bulan lalu']
+            ],
+            'financial_health' => [
+                'keywords' => ['kesehatan keuangan', 'cek kesehatan keuangan', 'analisis kesehatan keuangan', 'evaluasi keuangan', 'penilaian keuangan', 'cek keuangan', 'analisis keuangan', 'evaluasi kesehatan keuangan', 'peringkat keuangan', 'skor keuangan', 'cek skor keuangan', 'evaluasi kondisi keuangan', 'analisis kondisi keuangan', 'kondisi keuangan', 'cek kondisi keuangan']
+            ],
             'yearly_expense_income' => [
                 'keywords' => ['pengeluaran tahun', 'pemasukan tahun', 'uang tahun', 'keuangan tahun', 'total tahun', 'jumlah tahun'],
                 'year_patterns' => ['2024', '2025', '2026', '2027', '2028', '2029', '2030', 'tahun ini', 'tahun depan', 'tahun lalu']
@@ -103,6 +116,9 @@ class FinancialChatbotService implements FinancialChatbotServiceInterface
             ],
             'budget_info' => [
                 'keywords' => ['anggaran', 'rencana pengeluaran', 'batas pengeluaran', 'anggaran bulan ini', 'anggaran bulan depan']
+            ],
+            'financial_insights' => [
+                'keywords' => ['wawasan keuangan', 'analisis keuangan', 'insight keuangan', 'pandangan keuangan', 'gambaran keuangan', 'evaluasi keuangan', 'analisis kondisi keuangan', 'pemahaman keuangan', 'review keuangan', 'tinjauan keuangan']
             ]
         ];
 
@@ -179,6 +195,12 @@ class FinancialChatbotService implements FinancialChatbotServiceInterface
                 return $this->calculateBalance($userId);
             case 'future_transactions':
                 return $this->getFutureTransactions($userId);
+            case 'next_month_prediction':
+                return $this->predictNextMonthExpenses($userId);
+            case 'date_filtered_data':
+                return $this->getDateFilteredData($userId, $intent);
+            case 'financial_health':
+                return $this->calculateFinancialHealth($userId);
             case 'yearly_expense_income':
                 return $this->calculateYearlyExpenseIncome($userId, $intent);
             case 'transaction_list':
@@ -187,6 +209,8 @@ class FinancialChatbotService implements FinancialChatbotServiceInterface
                 return $this->getSavingsGoalsInfo($userId);
             case 'budget_info':
                 return $this->getBudgetInfo($userId);
+            case 'financial_insights':
+                return $this->getFinancialInsights($userId);
             default:
                 return null;
         }
@@ -549,14 +573,17 @@ class FinancialChatbotService implements FinancialChatbotServiceInterface
     /**
      * Get general response using local logic when specific processing fails
      */
-    private function getGeneralResponse(int $userId, string $question): array
+    private function getGeneralResponse(?int $userId, string $question): array
     {
         // Get user's financial data to provide context
-        $recentTransactions = $this->transactionRepository->getAll($userId, [
-            'limit' => 20,
-            'start_date' => now()->subDays(30)->format('Y-m-d'),
-            'end_date' => now()->format('Y-m-d')
-        ]);
+        $recentTransactions = collect([]); // Return empty collection if userId is null
+        if ($userId !== null) {
+            $recentTransactions = $this->transactionRepository->getAll($userId, [
+                'limit' => 20,
+                'start_date' => now()->subDays(30)->format('Y-m-d'),
+                'end_date' => now()->format('Y-m-d')
+            ]);
+        }
 
         $financialSummary = $this->generateFinancialSummary($recentTransactions->items());
 
@@ -630,6 +657,66 @@ class FinancialChatbotService implements FinancialChatbotServiceInterface
                 return [
                     'success' => true,
                     'answer' => 'Saat ini Anda belum memiliki riwayat transaksi. Silakan tambahkan transaksi terlebih dahulu untuk melihat data keuangan Anda.',
+                    'intent' => ['type' => 'no_data']
+                ];
+            }
+        }
+
+        // Check if the question is asking for financial insights
+        if (strpos($questionLower, 'wawasan') !== false || strpos($questionLower, 'insight') !== false ||
+            strpos($questionLower, 'analisis') !== false || strpos($questionLower, 'pandangan') !== false) {
+
+            if ($recentTransactions->count() > 0) {
+                $insights = $this->generateFinancialInsights($userId);
+                return [
+                    'success' => true,
+                    'answer' => $insights,
+                    'intent' => ['type' => 'financial_insights']
+                ];
+            } else {
+                return [
+                    'success' => true,
+                    'answer' => 'Saat ini Anda belum memiliki cukup data transaksi untuk memberikan wawasan keuangan. Silakan tambahkan beberapa transaksi untuk mendapatkan analisis yang lebih lengkap.',
+                    'intent' => ['type' => 'no_data']
+                ];
+            }
+        }
+
+        // Check if the question is asking for financial health assessment
+        if (strpos($questionLower, 'kesehatan') !== false || strpos($questionLower, 'cek keuangan') !== false ||
+            strpos($questionLower, 'evaluasi keuangan') !== false || strpos($questionLower, 'peringkat keuangan') !== false) {
+
+            if ($recentTransactions->count() > 0) {
+                $healthAssessment = $this->calculateFinancialHealth($userId);
+                return [
+                    'success' => true,
+                    'answer' => $healthAssessment,
+                    'intent' => ['type' => 'financial_health']
+                ];
+            } else {
+                return [
+                    'success' => true,
+                    'answer' => 'Saat ini Anda belum memiliki cukup data transaksi untuk menilai kesehatan keuangan. Silakan tambahkan beberapa transaksi untuk mendapatkan penilaian yang akurat.',
+                    'intent' => ['type' => 'no_data']
+                ];
+            }
+        }
+
+        // Check if the question is asking for financial predictions
+        if (strpos($questionLower, 'prediksi') !== false || strpos($questionLower, 'proyeksi') !== false ||
+            strpos($questionLower, 'ramalan') !== false || strpos($questionLower, 'perkiraan') !== false) {
+
+            if ($recentTransactions->count() > 0) {
+                $prediction = $this->predictNextMonthExpenses($userId);
+                return [
+                    'success' => true,
+                    'answer' => $prediction,
+                    'intent' => ['type' => 'financial_prediction']
+                ];
+            } else {
+                return [
+                    'success' => true,
+                    'answer' => 'Saat ini Anda belum memiliki cukup data historis untuk membuat prediksi keuangan. Silakan tambahkan beberapa transaksi untuk meningkatkan akurasi prediksi.',
                     'intent' => ['type' => 'no_data']
                 ];
             }
@@ -775,20 +862,771 @@ class FinancialChatbotService implements FinancialChatbotServiceInterface
     }
 
     /**
+     * Get financial insights for the user
+     */
+    private function getFinancialInsights(int $userId): string
+    {
+        return $this->generateFinancialInsights($userId);
+    }
+
+    /**
      * Save conversation to database for local chatbot
      */
     private function saveConversation(int $userId, string $question, string $answer, array $intent): void
     {
         try {
-            ChatbotConversation::create([
-                'user_id' => $userId,
-                'user_question' => $question,
-                'ai_response' => $answer,
-                'intent' => $intent,
-                'conversation_type' => 'financial'
-            ]);
+            // Only save if user is authenticated
+            if ($userId !== null) {
+                ChatbotConversation::create([
+                    'user_id' => $userId,
+                    'user_question' => $question,
+                    'ai_response' => $answer,
+                    'intent' => $intent,
+                    'conversation_type' => 'financial'
+                ]);
+            }
         } catch (\Exception $e) {
             Log::error('Failed to save chatbot conversation: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Generate financial insights based on user's transaction data
+     */
+    private function generateFinancialInsights(int $userId): string
+    {
+        $sections = $this->generateIndividualInsightSections($userId);
+
+        // Combine all sections into one comprehensive report
+        $insights = "=== ANALISIS KEUANGAN PRIBADI ANDA ===\n\n";
+
+        foreach ($sections as $section) {
+            $insights .= $section . "\n";
+        }
+
+        $insights .= "\nCatatan: Analisis ini didasarkan pada data transaksi Anda selama 6 bulan terakhir. ";
+        $insights .= "Untuk hasil yang lebih akurat, pastikan data transaksi Anda lengkap dan terkini.";
+
+        return $insights;
+    }
+
+    /**
+     * Generate individual insight sections that can be displayed separately
+     */
+    private function generateIndividualInsightSections(int $userId): array
+    {
+        // Get recent transactions (last 6 months for more comprehensive analysis)
+        $sixMonthsAgo = now()->subMonths(6)->startOfMonth()->format('Y-m-d');
+        $recentTransactions = $this->transactionRepository->getAll($userId, [
+            'limit' => 1000,
+            'start_date' => $sixMonthsAgo,
+            'end_date' => now()->format('Y-m-d')
+        ]);
+
+        if ($recentTransactions->isEmpty()) {
+            return ["Anda belum memiliki cukup data transaksi untuk memberikan wawasan keuangan. Silakan tambahkan beberapa transaksi untuk mendapatkan analisis yang lebih lengkap."];
+        }
+
+        // Calculate monthly totals
+        $monthlyData = [];
+        foreach ($recentTransactions as $transaction) {
+            $monthYear = $transaction->date->format('Y-m');
+            if (!isset($monthlyData[$monthYear])) {
+                $monthlyData[$monthYear] = ['income' => 0, 'expense' => 0, 'transactions' => []];
+            }
+
+            if ($transaction->type === 'income') {
+                $monthlyData[$monthYear]['income'] += $transaction->amount;
+            } else {
+                $monthlyData[$monthYear]['expense'] += $transaction->amount;
+            }
+            $monthlyData[$monthYear]['transactions'][] = $transaction;
+        }
+
+        // Sort by date
+        ksort($monthlyData);
+
+        // Calculate totals
+        $totalIncome = 0;
+        $totalExpense = 0;
+        $categoryExpenses = [];
+        $dailyExpenses = []; // Track daily spending patterns
+
+        foreach ($recentTransactions as $transaction) {
+            if ($transaction->type === 'income') {
+                $totalIncome += $transaction->amount;
+            } else {
+                $totalExpense += $transaction->amount;
+
+                // Group expenses by category
+                $categoryName = $transaction->category ? $transaction->category->name : 'Umum';
+                if (!isset($categoryExpenses[$categoryName])) {
+                    $categoryExpenses[$categoryName] = 0;
+                }
+                $categoryExpenses[$categoryName] += $transaction->amount;
+
+                // Track daily expenses for pattern analysis
+                $day = $transaction->date->format('Y-m-d');
+                if (!isset($dailyExpenses[$day])) {
+                    $dailyExpenses[$day] = 0;
+                }
+                $dailyExpenses[$day] += $transaction->amount;
+            }
+        }
+
+        // Find top expense categories
+        arsort($categoryExpenses);
+        $topCategories = array_slice($categoryExpenses, 0, 5, true); // Get top 5 instead of 3
+
+        $sections = [];
+
+        // Overall financial health
+        $balance = $totalIncome - $totalExpense;
+        if ($balance > 0) {
+            $sections[] = "💰 KONDISI KEUANGAN SAAT INI:\nAnda memiliki surplus sebesar Rp " . number_format($balance, 0, ',', '.') . ". Ini menunjukkan manajemen keuangan yang baik dan disiplin finansial yang kuat. Dengan posisi keuangan yang positif ini, Anda memiliki ruang untuk mengejar tujuan finansial jangka panjang seperti investasi atau menambah tabungan.";
+        } else {
+            $sections[] = "⚠️ KONDISI KEUANGAN SAAT INI:\nAnda mengalami defisit sebesar Rp " . number_format(abs($balance), 0, ',', '.') . ". Ini berarti pengeluaran Anda melebihi pendapatan, yang merupakan sinyal penting untuk segera meninjau kembali pola pengeluaran Anda. Disarankan untuk segera mengidentifikasi dan mengurangi pengeluaran non-esensial.";
+        }
+
+        // Monthly trend analysis
+        $months = array_keys($monthlyData);
+        if (count($months) >= 2) {
+            $latestMonth = end($months);
+            $prevMonth = prev($months);
+
+            if (isset($monthlyData[$prevMonth]) && isset($monthlyData[$latestMonth])) {
+                $prevExpense = $monthlyData[$prevMonth]['expense'];
+                $latestExpense = $monthlyData[$latestMonth]['expense'];
+
+                if ($prevExpense > 0) {
+                    $changePercent = (($latestExpense - $prevExpense) / $prevExpense) * 100;
+                    if ($changePercent > 10) {
+                        $sections[] = "📈 TREN PENGELOUARAN:\nPengeluaran Anda meningkat sebesar " . number_format(abs($changePercent), 2) . "% dari bulan sebelumnya. Kenaikan signifikan ini memerlukan evaluasi mendalam terhadap pengeluaran Anda. Periksa kembali apakah kenaikan ini disebabkan oleh pengeluaran esensial atau non-esensial. Jika disebabkan oleh pengeluaran non-esensial, pertimbangkan untuk menyesuaikan anggaran Anda.";
+                    } elseif ($changePercent < -10) {
+                        $sections[] = "📉 TREN PENGELOUARAN:\nPengeluaran Anda menurun sebesar " . number_format(abs($changePercent), 2) . "% dari bulan sebelumnya. Penurunan ini menunjukkan bahwa Anda sedang dalam jalur yang benar dalam mengelola keuangan. Pertahankan disiplin ini dan pertimbangkan untuk mengalihkan penghematan Anda ke instrumen investasi yang produktif.";
+                    } else {
+                        $sections[] = "📊 TREN PENGELOUARAN:\nPengeluaran Anda relatif stabil dibandingkan bulan sebelumnya. Stabilitas ini menunjukkan bahwa Anda memiliki kontrol yang baik terhadap pengeluaran Anda. Namun, tetap penting untuk secara berkala mengevaluasi apakah pengeluaran Anda sejalan dengan prioritas keuangan Anda.";
+                    }
+                }
+            }
+        }
+
+        // Seasonal spending patterns
+        $monthlyAvg = [];
+        foreach ($monthlyData as $month => $data) {
+            $monthNum = substr($month, 5, 2);
+            if (!isset($monthlyAvg[$monthNum])) {
+                $monthlyAvg[$monthNum] = [];
+            }
+            $monthlyAvg[$monthNum][] = $data['expense'];
+        }
+
+        $highestSpendingMonth = null;
+        $highestAvg = 0;
+        foreach ($monthlyAvg as $month => $expenses) {
+            $avg = array_sum($expenses) / count($expenses);
+            if ($avg > $highestAvg) {
+                $highestAvg = $avg;
+                $highestSpendingMonth = $month;
+            }
+        }
+
+        if ($highestSpendingMonth) {
+            $monthNames = [
+                '01' => 'Januari', '02' => 'Februari', '03' => 'Maret', '04' => 'April',
+                '05' => 'Mei', '06' => 'Juni', '07' => 'Juli', '08' => 'Agustus',
+                '09' => 'September', '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
+            ];
+            $sections[] = "📅 POLA PENGELOUARAN MUSIMAN:\nBerdasarkan data historis, bulan " . $monthNames[$highestSpendingMonth] . " cenderung menjadi bulan dengan pengeluaran tertinggi. Ini mungkin disebabkan oleh faktor-faktor seperti liburan, kebutuhan musiman, atau acara-acara khusus. Disarankan untuk mulai menyiapkan anggaran lebih besar di bulan ini dengan mempersiapkan dana cadangan beberapa bulan sebelumnya.";
+        }
+
+        // Top expense categories
+        if (!empty($topCategories)) {
+            $categorySection = "🏷️ KATEGORI PENGELOUARAN TERBESAR:\n";
+            $rank = 1;
+            foreach ($topCategories as $category => $amount) {
+                $percentage = $totalExpense > 0 ? ($amount / $totalExpense) * 100 : 0;
+                $categorySection .= "   {$rank}. {$category}: Rp " . number_format($amount, 0, ',', '.') . " (" . number_format($percentage, 2) . "% dari total pengeluaran)\n";
+                $rank++;
+            }
+
+            // Analyze the top category
+            $topCategory = key($topCategories);
+            $topPercentage = current($topCategories) / $totalExpense * 100;
+            if ($topPercentage > 30) {
+                $categorySection .= "\n🔍 ANALISIS KATEGORI UTAMA:\nKategori {$topCategory} menyumbang lebih dari 30% dari total pengeluaran Anda, yang merupakan proporsi yang cukup besar. Pertimbangkan untuk mengevaluasi kembali pengeluaran dalam kategori ini dan cari cara untuk mengoptimalkannya tanpa mengorbankan kebutuhan pokok.";
+            }
+
+            $sections[] = $categorySection;
+        }
+
+        // Daily spending patterns
+        if (!empty($dailyExpenses)) {
+            $avgDailyExpense = array_sum($dailyExpenses) / count($dailyExpenses);
+            $highSpendingDays = array_filter($dailyExpenses, function($amount) use ($avgDailyExpense) {
+                return $amount > $avgDailyExpense * 1.5; // Days with 50% more spending than average
+            });
+
+            if (count($highSpendingDays) > 0) {
+                $sections[] = "⏰ POLA PENGELOUARAN HARIAN:\nAnda cenderung mengeluarkan lebih banyak uang pada " . count($highSpendingDays) . " hari tertentu dalam sebulan. Identifikasi hari-hari ini untuk mengoptimalkan pengeluaran. Misalnya, jika pengeluaran tinggi terjadi di akhir pekan, pertimbangkan untuk membuat anggaran khusus untuk aktivitas akhir pekan.";
+            }
+        }
+
+        // Savings rate analysis
+        if ($totalIncome > 0) {
+            $savingsRate = ($balance / $totalIncome) * 100;
+            if ($savingsRate > 20) {
+                $sections[] = "🏆 TINGKAT TABUNGAN:\nAnda memiliki tingkat tabungan sebesar " . number_format($savingsRate, 2) . "%. Ini merupakan rasio yang sangat baik dan menunjukkan disiplin keuangan yang kuat. Dengan tingkat tabungan ini, Anda berada di jalur yang benar menuju kebebasan finansial. Pertimbangkan untuk mengalokasikan sebagian tabungan Anda ke instrumen investasi yang sesuai dengan profil risiko Anda.";
+            } elseif ($savingsRate > 10) {
+                $sections[] = "🏆 TINGKAT TABUNGAN:\nAnda memiliki tingkat tabungan sebesar " . number_format($savingsRate, 2) . "%. Ini merupakan rasio yang cukup baik namun masih ada ruang untuk peningkatan. Usahakan untuk meningkatkan tabungan Anda hingga minimal 20% dari pendapatan untuk memperkuat posisi keuangan jangka panjang Anda.";
+            } elseif ($savingsRate > 0) {
+                $sections[] = "🏆 TINGKAT TABUNGAN:\nAnda memiliki tingkat tabungan sebesar " . number_format($savingsRate, 2) . "%. Ini merupakan awal yang baik namun masih jauh dari rekomendasi keuangan umum sebesar 10-20% dari pendapatan. Disarankan untuk meningkatkan tabungan minimal hingga 10-20% dari pendapatan Anda.";
+            } else {
+                $sections[] = "🏆 TINGKAT TABUNGAN:\nAnda belum memiliki tabungan karena pengeluaran melebihi pendapatan. Ini adalah situasi yang perlu segera ditangani. Prioritaskan pengurangan pengeluaran non-esensial dan cari peluang untuk meningkatkan pendapatan. Tanpa tabungan, Anda rentan terhadap situasi keuangan darurat.";
+            }
+        }
+
+        // Emergency fund calculation
+        $monthlyExpenseAvg = count($monthlyData) > 0 ? array_sum(array_column($monthlyData, 'expense')) / count($monthlyData) : 0;
+        $recommendedEmergencyFund = $monthlyExpenseAvg * 6; // 6 months of expenses
+        $emergencyFundStatus = $balance >= $recommendedEmergencyFund ? "TERSEDIA" : "BELUM MEMADAI";
+
+        $sections[] = "🛡️ DANA DARURAT:\nDana darurat idealnya sebesar Rp " . number_format($recommendedEmergencyFund, 0, ',', '.') . " (6x rata-rata pengeluaran bulanan). Dana darurat ini sangat penting sebagai buffer untuk situasi tak terduga seperti kehilangan pekerjaan, biaya medis, atau perbaikan tak terduga. Status: " . $emergencyFundStatus . ". Jika dana darurat belum memadai, prioritaskan pembentukan dana ini sebelum mengejar tujuan investasi lainnya.";
+
+        // Predictive analysis
+        if (count($monthlyData) >= 3) {
+            // Calculate average monthly change in expenses
+            $expenseChanges = [];
+            $monthsList = array_values($monthlyData);
+            for ($i = 1; $i < count($monthsList); $i++) {
+                if ($monthsList[$i-1]['expense'] > 0) {
+                    $change = (($monthsList[$i]['expense'] - $monthsList[$i-1]['expense']) / $monthsList[$i-1]['expense']) * 100;
+                    $expenseChanges[] = $change;
+                }
+            }
+
+            if (!empty($expenseChanges)) {
+                $avgChange = array_sum($expenseChanges) / count($expenseChanges);
+                if ($avgChange > 5) {
+                    $sections[] = "🔮 ANALISIS PREDIKTIF:\nBerdasarkan tren historis, pengeluaran Anda diperkirakan akan meningkat sekitar " . number_format($avgChange, 2) . "% per bulan. Ini menunjukkan adanya potensi peningkatan pengeluaran yang signifikan di masa depan. Pertimbangkan untuk menyesuaikan anggaran Anda dan menyiapkan strategi untuk mengelola potensi kenaikan ini. Evaluasi kembali kebiasaan belanja Anda dan identifikasi area yang bisa dioptimalkan.";
+                } elseif ($avgChange < -5) {
+                    $sections[] = "🔮 ANALISIS PREDIKTIF:\nBerdasarkan tren historis, pengeluaran Anda diperkirakan akan menurun sekitar " . number_format(abs($avgChange), 2) . "% per bulan. Ini menunjukkan bahwa Anda sedang dalam jalur yang semakin baik dalam pengelolaan keuangan. Manfaatkan penurunan ini untuk meningkatkan tabungan atau alokasikan ke investasi produktif.";
+                } else {
+                    $sections[] = "🔮 ANALISIS PREDIKTIF:\nPengeluaran Anda diperkirakan akan relatif stabil dalam beberapa bulan ke depan. Ini memberikan kepastian dalam perencanaan keuangan jangka pendek. Gunakan stabilitas ini untuk fokus pada tujuan keuangan jangka menengah dan panjang seperti pembelian aset atau investasi.";
+                }
+            }
+        }
+
+        // Personalized recommendations
+        $recommendationSection = "💡 REKOMENDASI PRIBADI:\n";
+        if ($balance <= 0) {
+            $recommendationSection .= "- Prioritaskan pengurangan pengeluaran non-esensial untuk mencapai titik impas\n";
+        }
+
+        if (!empty($topCategories)) {
+            $topCategory = key($topCategories);
+            if (strpos(strtolower($topCategory), 'makan') !== false) {
+                $recommendationSection .= "- Pertimbangkan untuk menyiapkan makanan sendiri untuk mengurangi biaya makanan. Membawa bekal dari rumah bisa menghemat hingga 60-70% dari biaya makan harian.\n";
+            } elseif (strpos(strtolower($topCategory), 'transportasi') !== false) {
+                $recommendationSection .= "- Evaluasi opsi transportasi yang lebih hemat biaya (misalnya carpooling, kendaraan umum, atau kereta api). Pertimbangkan juga untuk mengatur rute perjalanan Anda secara efisien untuk mengurangi biaya transportasi.\n";
+            } elseif (strpos(strtolower($topCategory), 'hiburan') !== false) {
+                $recommendationSection .= "- Batasi pengeluaran hiburan untuk meningkatkan tabungan. Pertimbangkan aktivitas hiburan gratis atau murah seperti berjalan-jalan di taman, bermain di rumah, atau acara komunitas.\n";
+            } elseif (strpos(strtolower($topCategory), 'tagih') !== false) {
+                $recommendationSection .= "- Tinjau kembali langganan atau cicilan yang mungkin bisa dioptimalkan. Periksa apakah ada langganan yang tidak Anda gunakan secara maksimal dan pertimbangkan untuk membatalkannya.\n";
+            }
+        }
+
+        $recommendationSection .= "- Buat anggaran bulanan berdasarkan pola pengeluaran historis Anda\n";
+        $recommendationSection .= "- Siapkan dana darurat sesuai rekomendasi di atas\n";
+        $recommendationSection .= "- Evaluasi investasi untuk meningkatkan pendapatan pasif\n";
+        $recommendationSection .= "- Tinjau dan bandingkan harga sebelum melakukan pembelian besar\n";
+        $recommendationSection .= "- Gunakan aplikasi pelacak keuangan untuk pemantauan yang lebih ketat\n";
+
+        $sections[] = $recommendationSection;
+
+        return $sections;
+    }
+
+    /**
+     * Get a specific insight section by type
+     */
+    private function getSpecificInsight(int $userId, string $sectionType): string
+    {
+        $sections = $this->generateIndividualInsightSections($userId);
+
+        switch ($sectionType) {
+            case 'financial_health':
+                return $this->filterSectionByEmoji($sections, '💰', '⚠️');
+            case 'trend_analysis':
+                return $this->filterSectionByEmoji($sections, '📈', '📉', '📊');
+            case 'seasonal_pattern':
+                return $this->filterSectionByEmoji($sections, '📅');
+            case 'expense_categories':
+                return $this->filterSectionByEmoji($sections, '🏷️', '🔍');
+            case 'daily_pattern':
+                return $this->filterSectionByEmoji($sections, '⏰');
+            case 'savings_rate':
+                return $this->filterSectionByEmoji($sections, '🏆');
+            case 'emergency_fund':
+                return $this->filterSectionByEmoji($sections, '🛡️');
+            case 'predictive_analysis':
+                return $this->filterSectionByEmoji($sections, '🔮');
+            case 'recommendations':
+                return $this->filterSectionByEmoji($sections, '💡');
+            default:
+                return implode("\n\n", $sections);
+        }
+    }
+
+    /**
+     * Helper function to filter sections by emoji
+     */
+    private function filterSectionByEmoji(array $sections, string ...$emojis): string
+    {
+        foreach ($sections as $section) {
+            foreach ($emojis as $emoji) {
+                if (str_starts_with($section, $emoji)) {
+                    return $section;
+                }
+            }
+        }
+
+        return "Informasi untuk bagian ini tidak tersedia.";
+    }
+
+    /**
+     * Generate predictive analysis for next month based on historical patterns
+     */
+    private function predictNextMonthExpenses(int $userId): string
+    {
+        // Get historical data for the past few months
+        $threeMonthsAgo = now()->subMonths(3)->startOfMonth()->format('Y-m-d');
+        $historicalTransactions = $this->transactionRepository->getAll($userId, [
+            'limit' => 1000,
+            'start_date' => $threeMonthsAgo,
+            'end_date' => now()->format('Y-m-d'),
+            'type' => 'expense'
+        ]);
+
+        if ($historicalTransactions->isEmpty()) {
+            return "Belum ada cukup data historis untuk membuat prediksi pengeluaran bulan depan. Silakan tambahkan lebih banyak transaksi untuk meningkatkan akurasi prediksi.";
+        }
+
+        // Group expenses by category for the past 3 months
+        $categoryTotals = [];
+        $monthCounts = []; // Count how many months each category appeared
+
+        foreach ($historicalTransactions as $transaction) {
+            $monthYear = $transaction->date->format('Y-m');
+            $categoryName = $transaction->category ? $transaction->category->name : 'Umum';
+
+            if (!isset($categoryTotals[$categoryName])) {
+                $categoryTotals[$categoryName] = 0;
+            }
+            $categoryTotals[$categoryName] += $transaction->amount;
+
+            // Track months where category appeared
+            if (!isset($monthCounts[$categoryName])) {
+                $monthCounts[$categoryName] = [];
+            }
+            if (!in_array($monthYear, $monthCounts[$categoryName])) {
+                $monthCounts[$categoryName][] = $monthYear;
+            }
+        }
+
+        // Calculate average monthly expense per category
+        $avgCategoryExpenses = [];
+        foreach ($categoryTotals as $category => $total) {
+            $avgCategoryExpenses[$category] = $total / count($monthCounts[$category]);
+        }
+
+        // Predict next month's expenses based on average
+        $nextMonth = now()->addMonth();
+        $predictedExpenses = [];
+        $totalPredicted = 0;
+
+        foreach ($avgCategoryExpenses as $category => $avgAmount) {
+            $predictedExpenses[$category] = $avgAmount;
+            $totalPredicted += $avgAmount;
+        }
+
+        // Get user's income pattern to determine if predicted expenses are sustainable
+        $incomeTransactions = $this->transactionRepository->getAll($userId, [
+            'limit' => 1000,
+            'start_date' => $threeMonthsAgo,
+            'end_date' => now()->format('Y-m-d'),
+            'type' => 'income'
+        ]);
+
+        $totalIncome = 0;
+        $incomeMonths = [];
+        foreach ($incomeTransactions as $transaction) {
+            $monthYear = $transaction->date->format('Y-m');
+            $totalIncome += $transaction->amount;
+
+            if (!in_array($monthYear, $incomeMonths)) {
+                $incomeMonths[] = $monthYear;
+            }
+        }
+
+        $avgMonthlyIncome = count($incomeMonths) > 0 ? $totalIncome / count($incomeMonths) : 0;
+        $sustainability = $totalPredicted <= $avgMonthlyIncome ? "cukup" : "melebihi";
+
+        // Prepare prediction response
+        $prediction = "📊 PREDIKSI KEUANGAN BULAN DEPAN ({$nextMonth->format('F Y')}):\n\n";
+        $prediction .= "Berdasarkan pola historis pengeluaran Anda, berikut perkiraan pengeluaran bulan depan:\n\n";
+
+        arsort($predictedExpenses); // Sort by highest expense
+        foreach ($predictedExpenses as $category => $amount) {
+            $prediction .= "- {$category}: Rp " . number_format($amount, 0, ',', '.') . "\n";
+        }
+
+        $prediction .= "\n💰 Total prediksi pengeluaran: Rp " . number_format($totalPredicted, 0, ',', '.') . "\n";
+        $prediction .= "💰 Rata-rata pendapatan bulanan: Rp " . number_format($avgMonthlyIncome, 0, ',', '.') . "\n";
+        $prediction .= "Status keuangan: Pengeluaran bulan depan diperkirakan " . $sustainability . " dari pendapatan.\n\n";
+
+        // Add recommendations based on prediction
+        $prediction .= "💡 REKOMENDASI:\n";
+        if ($sustainability === "melebihi") {
+            $prediction .= "- Pertimbangkan untuk mengurangi pengeluaran di kategori tertentu\n";
+            $prediction .= "- Evaluasi kembali anggaran bulan depan\n";
+        } else {
+            $prediction .= "- Anda memiliki keseimbangan keuangan yang baik\n";
+            $prediction .= "- Pertimbangkan untuk menabung sebagian dari sisa anggaran\n";
+        }
+
+        $prediction .= "- Siapkan dana darurat untuk mengantisipasi pengeluaran tak terduga\n";
+        $prediction .= "- Bandingkan prediksi ini dengan rencana anggaran Anda\n";
+
+        return $prediction;
+    }
+
+    /**
+     * Get data filtered by specific date range based on user's question
+     */
+    private function getDateFilteredData(int $userId, array $intent): string
+    {
+        // Extract date information from intent
+        $year = $intent['year'] ?? null;
+        $time_period = $intent['time_period'] ?? null;
+
+        // If year is specified, get data for that year
+        if ($year) {
+            $startDate = \Carbon\Carbon::createFromDate($year, 1, 1)->startOfDay();
+            $endDate = \Carbon\Carbon::createFromDate($year, 12, 31)->endOfDay();
+
+            // If time_period contains specific month, narrow down to that month
+            if ($time_period) {
+                $monthNumber = $this->getMonthNumberFromName($time_period);
+                if ($monthNumber) {
+                    $startDate = \Carbon\Carbon::createFromDate($year, $monthNumber, 1)->startOfMonth();
+                    $endDate = \Carbon\Carbon::createFromDate($year, $monthNumber, 1)->endOfMonth();
+                }
+            }
+
+            $incomeQuery = \App\Models\Transaction::where('user_id', $userId)
+                ->where('type', 'income')
+                ->whereDate('date', '>=', $startDate->format('Y-m-d'))
+                ->whereDate('date', '<=', $endDate->format('Y-m-d'));
+
+            $expenseQuery = \App\Models\Transaction::where('user_id', $userId)
+                ->where('type', 'expense')
+                ->whereDate('date', '>=', $startDate->format('Y-m-d'))
+                ->whereDate('date', '<=', $endDate->format('Y-m-d'));
+
+            $income = $incomeQuery->sum('amount');
+            $expense = $expenseQuery->sum('amount');
+
+            // Get detailed transactions
+            $transactions = \App\Models\Transaction::where('user_id', $userId)
+                ->whereDate('date', '>=', $startDate->format('Y-m-d'))
+                ->whereDate('date', '<=', $endDate->format('Y-m-d'))
+                ->with(['category'])
+                ->orderBy('date', 'desc')
+                ->get();
+
+            if ($transactions->isEmpty()) {
+                return "Tidak ditemukan data transaksi untuk periode {$startDate->format('F Y')}. Silakan tambahkan transaksi untuk periode tersebut.";
+            }
+
+            $result = "📊 DATA KEUANGAN UNTUK PERIODE {$startDate->format('F Y')}:\n\n";
+            $result .= "Total Pemasukan: Rp " . number_format($income, 0, ',', '.') . "\n";
+            $result .= "Total Pengeluaran: Rp " . number_format($expense, 0, ',', '.') . "\n";
+            $result .= "Saldo: Rp " . number_format($income - $expense, 0, ',', '.') . "\n\n";
+
+            $result .= "📋 TRANSAKSI RINCIAN:\n";
+            foreach ($transactions as $transaction) {
+                $categoryName = $transaction->category ? $transaction->category->name : 'Umum';
+                $typeText = $transaction->type === 'income' ? 'Pemasukan' : 'Pengeluaran';
+                $result .= "- {$typeText}: Rp " . number_format($transaction->amount, 0, ',', '.') .
+                          " ({$transaction->description} - {$categoryName}) pada " .
+                          $transaction->date->format('j F Y') . "\n";
+            }
+
+            return $result;
+        }
+
+        return "Tidak dapat menemukan informasi tanggal yang spesifik dalam permintaan Anda.";
+    }
+
+    /**
+     * Helper function to get month number from month name
+     */
+    private function getMonthNumberFromName(string $monthName): ?int
+    {
+        $monthName = strtolower(trim($monthName));
+        $months = [
+            'januari' => 1, 'februari' => 2, 'maret' => 3, 'april' => 4,
+            'mei' => 5, 'juni' => 6, 'juli' => 7, 'agustus' => 8,
+            'september' => 9, 'oktober' => 10, 'november' => 11, 'desember' => 12
+        ];
+
+        foreach ($months as $name => $number) {
+            if (strpos($monthName, $name) !== false) {
+                return $number;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Calculate financial health based on user's transaction data
+     */
+    private function calculateFinancialHealth(int $userId): string
+    {
+        // Get recent transactions (last 6 months for more comprehensive analysis)
+        $sixMonthsAgo = now()->subMonths(6)->startOfMonth()->format('Y-m-d');
+        $recentTransactions = $this->transactionRepository->getAll($userId, [
+            'limit' => 1000,
+            'start_date' => $sixMonthsAgo,
+            'end_date' => now()->format('Y-m-d')
+        ]);
+
+        if ($recentTransactions->isEmpty()) {
+            return "Anda belum memiliki cukup data transaksi untuk menilai kesehatan keuangan. Silakan tambahkan beberapa transaksi untuk mendapatkan penilaian yang akurat.";
+        }
+
+        // Calculate monthly totals
+        $monthlyData = [];
+        foreach ($recentTransactions as $transaction) {
+            $monthYear = $transaction->date->format('Y-m');
+            if (!isset($monthlyData[$monthYear])) {
+                $monthlyData[$monthYear] = ['income' => 0, 'expense' => 0, 'transactions' => []];
+            }
+
+            if ($transaction->type === 'income') {
+                $monthlyData[$monthYear]['income'] += $transaction->amount;
+            } else {
+                $monthlyData[$monthYear]['expense'] += $transaction->amount;
+            }
+            $monthlyData[$monthYear]['transactions'][] = $transaction;
+        }
+
+        // Sort by date
+        ksort($monthlyData);
+
+        // Calculate totals
+        $totalIncome = 0;
+        $totalExpense = 0;
+        $categoryExpenses = [];
+        $dailyExpenses = []; // Track daily spending patterns
+
+        foreach ($recentTransactions as $transaction) {
+            if ($transaction->type === 'income') {
+                $totalIncome += $transaction->amount;
+            } else {
+                $totalExpense += $transaction->amount;
+
+                // Group expenses by category
+                $categoryName = $transaction->category ? $transaction->category->name : 'Umum';
+                if (!isset($categoryExpenses[$categoryName])) {
+                    $categoryExpenses[$categoryName] = 0;
+                }
+                $categoryExpenses[$categoryName] += $transaction->amount;
+
+                // Track daily expenses for pattern analysis
+                $day = $transaction->date->format('Y-m-d');
+                if (!isset($dailyExpenses[$day])) {
+                    $dailyExpenses[$day] = 0;
+                }
+                $dailyExpenses[$day] += $transaction->amount;
+            }
+        }
+
+        // Find top expense categories
+        arsort($categoryExpenses);
+        $topCategories = array_slice($categoryExpenses, 0, 5, true); // Get top 5 instead of 3
+
+        // Prepare health assessment
+        $assessment = "=== PENILAIAN KESEHATAN KEUANGAN ANDA ===\n\n";
+
+        // Overall financial health
+        $balance = $totalIncome - $totalExpense;
+        if ($balance > 0) {
+            $assessment .= "💰 KONDISI KEUANGAN SAAT INI:\n";
+            $assessment .= "Anda memiliki surplus sebesar Rp " . number_format($balance, 0, ',', '.') . ". Ini menunjukkan manajemen keuangan yang baik dan disiplin finansial yang kuat. ";
+            $assessment .= "Dengan posisi keuangan yang positif ini, Anda memiliki ruang untuk mengejar tujuan finansial jangka panjang seperti investasi atau menambah tabungan.\n\n";
+        } else {
+            $assessment .= "⚠️ KONDISI KEUANGAN SAAT INI:\n";
+            $assessment .= "Anda mengalami defisit sebesar Rp " . number_format(abs($balance), 0, ',', '.') . ". Ini berarti pengeluaran Anda melebihi pendapatan, ";
+            $assessment .= "yang merupakan sinyal penting untuk segera meninjau kembali pola pengeluaran Anda. Disarankan untuk segera mengidentifikasi dan mengurangi pengeluaran non-esensial.\n\n";
+        }
+
+        // Monthly trend analysis
+        $months = array_keys($monthlyData);
+        if (count($months) >= 2) {
+            $latestMonth = end($months);
+            $prevMonth = prev($months);
+
+            if (isset($monthlyData[$prevMonth]) && isset($monthlyData[$latestMonth])) {
+                $prevExpense = $monthlyData[$prevMonth]['expense'];
+                $latestExpense = $monthlyData[$latestMonth]['expense'];
+
+                if ($prevExpense > 0) {
+                    $changePercent = (($latestExpense - $prevExpense) / $prevExpense) * 100;
+                    if ($changePercent > 10) {
+                        $assessment .= "📈 TREN PENGELOUARAN:\n";
+                        $assessment .= "Pengeluaran Anda meningkat sebesar " . number_format(abs($changePercent), 2) . "% dari bulan sebelumnya. ";
+                        $assessment .= "Kenaikan signifikan ini memerlukan evaluasi mendalam terhadap pengeluaran Anda. ";
+                        $assessment .= "Periksa kembali apakah kenaikan ini disebabkan oleh pengeluaran esensial atau non-esensial. ";
+                        $assessment .= "Jika disebabkan oleh pengeluaran non-esensial, pertimbangkan untuk menyesuaikan anggaran Anda.\n\n";
+                    } elseif ($changePercent < -10) {
+                        $assessment .= "📉 TREN PENGELOUARAN:\n";
+                        $assessment .= "Pengeluaran Anda menurun sebesar " . number_format(abs($changePercent), 2) . "% dari bulan sebelumnya. ";
+                        $assessment .= "Penurunan ini menunjukkan bahwa Anda sedang dalam jalur yang benar dalam mengelola keuangan. ";
+                        $assessment .= "Pertahankan disiplin ini dan pertimbangkan untuk mengalihkan penghematan Anda ke instrumen investasi yang produktif.\n\n";
+                    } else {
+                        $assessment .= "📊 TREN PENGELOUARAN:\n";
+                        $assessment .= "Pengeluaran Anda relatif stabil dibandingkan bulan sebelumnya. ";
+                        $assessment .= "Stabilitas ini menunjukkan bahwa Anda memiliki kontrol yang baik terhadap pengeluaran Anda. ";
+                        $assessment .= "Namun, tetap penting untuk secara berkala mengevaluasi apakah pengeluaran Anda sejalan dengan prioritas keuangan Anda.\n\n";
+                    }
+                }
+            }
+        }
+
+        // Top expense categories
+        if (!empty($topCategories)) {
+            $assessment .= "🏷️ KATEGORI PENGELOUARAN TERBESAR:\n";
+            $rank = 1;
+            foreach ($topCategories as $category => $amount) {
+                $percentage = $totalExpense > 0 ? ($amount / $totalExpense) * 100 : 0;
+                $assessment .= "   {$rank}. {$category}: Rp " . number_format($amount, 0, ',', '.') . " (" . number_format($percentage, 2) . "% dari total pengeluaran)\n";
+                $rank++;
+            }
+            $assessment .= "\n";
+
+            // Analyze the top category
+            $topCategory = key($topCategories);
+            $topPercentage = current($topCategories) / $totalExpense * 100;
+            if ($topPercentage > 30) {
+                $assessment .= "🔍 ANALISIS KATEGORI UTAMA:\n";
+                $assessment .= "Kategori {$topCategory} menyumbang lebih dari 30% dari total pengeluaran Anda, ";
+                $assessment .= "yang merupakan proporsi yang cukup besar. Pertimbangkan untuk mengevaluasi kembali pengeluaran dalam kategori ini ";
+                $assessment .= "dan cari cara untuk mengoptimalkannya tanpa mengorbankan kebutuhan pokok.\n\n";
+            }
+        }
+
+        // Savings rate analysis
+        if ($totalIncome > 0) {
+            $savingsRate = ($balance / $totalIncome) * 100;
+            $assessment .= "🏆 TINGKAT TABUNGAN:\n";
+            if ($savingsRate > 20) {
+                $assessment .= "Anda memiliki tingkat tabungan sebesar " . number_format($savingsRate, 2) . "%. Ini merupakan rasio yang sangat baik ";
+                $assessment .= "dan menunjukkan disiplin keuangan yang kuat. Dengan tingkat tabungan ini, Anda berada di jalur yang benar menuju ";
+                $assessment .= "kebebasan finansial. Pertimbangkan untuk mengalokasikan sebagian tabungan Anda ke instrumen investasi yang sesuai ";
+                $assessment .= "dengan profil risiko Anda.\n\n";
+            } elseif ($savingsRate > 10) {
+                $assessment .= "Anda memiliki tingkat tabungan sebesar " . number_format($savingsRate, 2) . "%. Ini merupakan rasio yang cukup baik ";
+                $assessment .= "namun masih ada ruang untuk peningkatan. Usahakan untuk meningkatkan tabungan Anda hingga minimal 20% dari pendapatan ";
+                $assessment .= "untuk memperkuat posisi keuangan jangka panjang Anda.\n\n";
+            } elseif ($savingsRate > 0) {
+                $assessment .= "Anda memiliki tingkat tabungan sebesar " . number_format($savingsRate, 2) . "%. Ini merupakan awal yang baik ";
+                $assessment .= "namun masih jauh dari rekomendasi keuangan umum sebesar 10-20% dari pendapatan. Disarankan untuk meningkatkan ";
+                $assessment .= "tabungan minimal hingga 10-20% dari pendapatan Anda.\n\n";
+            } else {
+                $assessment .= "Anda belum memiliki tabungan karena pengeluaran melebihi pendapatan. Ini adalah situasi yang perlu segera ditangani. ";
+                $assessment .= "Prioritaskan pengurangan pengeluaran non-esensial dan cari peluang untuk meningkatkan pendapatan. ";
+                $assessment .= "Tanpa tabungan, Anda rentan terhadap situasi keuangan darurat.\n\n";
+            }
+        }
+
+        // Emergency fund calculation
+        $monthlyExpenseAvg = count($monthlyData) > 0 ? array_sum(array_column($monthlyData, 'expense')) / count($monthlyData) : 0;
+        $recommendedEmergencyFund = $monthlyExpenseAvg * 6; // 6 months of expenses
+        $emergencyFundStatus = $balance >= $recommendedEmergencyFund ? "TERSEDIA" : "BELUM MEMADAI";
+
+        $assessment .= "🛡️ DANA DARURAT:\n";
+        $assessment .= "Dana darurat idealnya sebesar Rp " . number_format($recommendedEmergencyFund, 0, ',', '.') . " ";
+        $assessment .= "(6x rata-rata pengeluaran bulanan). Dana darurat ini sangat penting sebagai buffer untuk situasi tak terduga ";
+        $assessment .= "seperti kehilangan pekerjaan, biaya medis, atau perbaikan tak terduga. Status: " . $emergencyFundStatus . ". ";
+        $assessment .= "Jika dana darurat belum memadai, prioritaskan pembentukan dana ini sebelum mengejar tujuan investasi lainnya.\n\n";
+
+        // Predictive analysis
+        $assessment .= "🔮 ANALISIS PREDIKTIF:\n";
+        if (count($monthlyData) >= 3) {
+            // Calculate average monthly change in expenses
+            $expenseChanges = [];
+            $monthsList = array_values($monthlyData);
+            for ($i = 1; $i < count($monthsList); $i++) {
+                if ($monthsList[$i-1]['expense'] > 0) {
+                    $change = (($monthsList[$i]['expense'] - $monthsList[$i-1]['expense']) / $monthsList[$i-1]['expense']) * 100;
+                    $expenseChanges[] = $change;
+                }
+            }
+
+            if (!empty($expenseChanges)) {
+                $avgChange = array_sum($expenseChanges) / count($expenseChanges);
+                if ($avgChange > 5) {
+                    $assessment .= "Berdasarkan tren historis, pengeluaran Anda diperkirakan akan meningkat sekitar " . number_format($avgChange, 2) . "% ";
+                    $assessment .= "per bulan. Ini menunjukkan adanya potensi peningkatan pengeluaran yang signifikan di masa depan. ";
+                    $assessment .= "Pertimbangkan untuk menyesuaikan anggaran Anda dan menyiapkan strategi untuk mengelola potensi kenaikan ini. ";
+                    $assessment .= "Evaluasi kembali kebiasaan belanja Anda dan identifikasi area yang bisa dioptimalkan.\n\n";
+                } elseif ($avgChange < -5) {
+                    $assessment .= "Berdasarkan tren historis, pengeluaran Anda diperkirakan akan menurun sekitar " . number_format(abs($avgChange), 2) . "% ";
+                    $assessment .= "per bulan. Ini menunjukkan bahwa Anda sedang dalam jalur yang semakin baik dalam pengelolaan keuangan. ";
+                    $assessment .= "Manfaatkan penurunan ini untuk meningkatkan tabungan atau alokasikan ke investasi produktif.\n\n";
+                } else {
+                    $assessment .= "Pengeluaran Anda diperkirakan akan relatif stabil dalam beberapa bulan ke depan. ";
+                    $assessment .= "Ini memberikan kepastian dalam perencanaan keuangan jangka pendek. Gunakan stabilitas ini untuk fokus ";
+                    $assessment .= "pada tujuan keuangan jangka menengah dan panjang seperti pembelian aset atau investasi.\n\n";
+                }
+            }
+        }
+
+        // Personalized recommendations
+        $assessment .= "💡 REKOMENDASI PRIBADI:\n";
+        if ($balance <= 0) {
+            $assessment .= "- Prioritaskan pengurangan pengeluaran non-esensial untuk mencapai titik impas\n";
+        }
+
+        if (!empty($topCategories)) {
+            $topCategory = key($topCategories);
+            if (strpos(strtolower($topCategory), 'makan') !== false) {
+                $assessment .= "- Pertimbangkan untuk menyiapkan makanan sendiri untuk mengurangi biaya makanan. ";
+                $assessment .= "Membawa bekal dari rumah bisa menghemat hingga 60-70% dari biaya makan harian.\n";
+            } elseif (strpos(strtolower($topCategory), 'transportasi') !== false) {
+                $assessment .= "- Evaluasi opsi transportasi yang lebih hemat biaya (misalnya carpooling, kendaraan umum, atau kereta api). ";
+                $assessment .= "Pertimbangkan juga untuk mengatur rute perjalanan Anda secara efisien untuk mengurangi biaya transportasi.\n";
+            } elseif (strpos(strtolower($topCategory), 'hiburan') !== false) {
+                $assessment .= "- Batasi pengeluaran hiburan untuk meningkatkan tabungan. ";
+                $assessment .= "Pertimbangkan aktivitas hiburan gratis atau murah seperti berjalan-jalan di taman, bermain di rumah, atau acara komunitas.\n";
+            } elseif (strpos(strtolower($topCategory), 'tagih') !== false) {
+                $assessment .= "- Tinjau kembali langganan atau cicilan yang mungkin bisa dioptimalkan. ";
+                $assessment .= "Periksa apakah ada langganan yang tidak Anda gunakan secara maksimal dan pertimbangkan untuk membatalkannya.\n";
+            }
+        }
+
+        $assessment .= "- Buat anggaran bulanan berdasarkan pola pengeluaran historis Anda\n";
+        $assessment .= "- Siapkan dana darurat sesuai rekomendasi di atas\n";
+        $assessment .= "- Evaluasi investasi untuk meningkatkan pendapatan pasif\n";
+        $assessment .= "- Tinjau dan bandingkan harga sebelum melakukan pembelian besar\n";
+        $assessment .= "- Gunakan aplikasi pelacak keuangan untuk pemantauan yang lebih ketat\n";
+
+        $assessment .= "\nCatatan: Penilaian ini didasarkan pada data transaksi Anda selama 6 bulan terakhir. ";
+        $assessment .= "Untuk hasil yang lebih akurat, pastikan data transaksi Anda lengkap dan terkini.";
+
+        return $assessment;
     }
 }

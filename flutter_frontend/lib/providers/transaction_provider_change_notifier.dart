@@ -61,17 +61,17 @@ class TransactionProvider extends ChangeNotifier {
   Future<void> fetchTransactions() async {
     // Guard: Prevent multiple simultaneous requests
     if (_isLoading) return;
-    
+
     // Check if there's already a fetch in progress
     if (_fetchCompleter != null && !_fetchCompleter!.isCompleted) {
       // Wait for the ongoing fetch to complete
       await _fetchCompleter!.future;
       return;
     }
-    
+
     // Optional: Add caching to prevent too frequent requests
     final now = DateTime.now();
-    if (_hasFetched && _lastFetchTime != null && 
+    if (_hasFetched && _lastFetchTime != null &&
         now.difference(_lastFetchTime!).inMilliseconds < 500) {
       return; // Debounce: prevent too frequent calls
     }
@@ -102,7 +102,7 @@ class TransactionProvider extends ChangeNotifier {
         if (!_listsEqual(_transactions, newTransactions)) {
           _transactions = newTransactions;
         }
-        
+
         _message = 'Transactions loaded successfully';
         _hasFetched = true;
       } else {
@@ -122,9 +122,9 @@ class TransactionProvider extends ChangeNotifier {
   // Helper method to compare two lists
   bool _listsEqual(List<Transaction> list1, List<Transaction> list2) {
     if (list1.length != list2.length) return false;
-    
+
     for (int i = 0; i < list1.length; i++) {
-      if (list1[i].id != list2[i].id || 
+      if (list1[i].id != list2[i].id ||
           list1[i].amount != list2[i].amount ||
           list1[i].type != list2[i].type ||
           list1[i].description != list2[i].description ||
@@ -144,7 +144,7 @@ class TransactionProvider extends ChangeNotifier {
     String? date,
   }) async {
     if (_isLoading) return false;
-    
+
     try {
       final Response.ApiResponse response = await _apiRepository.createTransaction(
         amount: amount,
@@ -274,7 +274,7 @@ class TransactionProvider extends ChangeNotifier {
 
   Future<bool> deleteTransaction(int id) async {
     if (_isLoading) return false;
-    
+
     try {
       final response = await _apiRepository.deleteTransaction(id);
 
@@ -308,6 +308,19 @@ class TransactionProvider extends ChangeNotifier {
       }
     }
     return uniqueCategories.values.toList();
+  }
+
+  // Helper method to get transaction name based on available relations
+  String getTransactionName(Transaction transaction) {
+    if (transaction.category?.name != null) {
+      return transaction.category!.name!;
+    } else if (transaction.billReminder?.name != null) {
+      return transaction.billReminder!.name!;
+    } else if (transaction.savingsGoal?.name != null) {
+      return transaction.savingsGoal!.name!;
+    } else {
+      return 'Transaksi Tanpa Nama';
+    }
   }
 
   // Clear the fetched flag if needed

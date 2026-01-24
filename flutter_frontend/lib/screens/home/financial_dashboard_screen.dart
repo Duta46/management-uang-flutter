@@ -142,7 +142,7 @@ class _FinancialDashboardScreenState extends State<FinancialDashboardScreen> {
                             children: [
                               // Profile Section
                               _buildProfileCard(authProvider),
-                              
+
                               // Financial Summary Cards
                               _buildBalanceCard(transactionProvider),
 
@@ -403,8 +403,6 @@ class _FinancialDashboardScreenState extends State<FinancialDashboardScreen> {
                   Navigator.pushNamed(context, '/bill-reminders');
                 },
               ),
-              // Card kosong untuk menjaga tata letak grid tetap seimbang
-              Container(),
               _buildMenuCard(
                 'Laporan',
                 Icons.bar_chart,
@@ -421,14 +419,8 @@ class _FinancialDashboardScreenState extends State<FinancialDashboardScreen> {
                   Navigator.pushNamed(context, '/savings-goals');
                 },
               ),
-              _buildMenuCard(
-                'Kesehatan Finansial',
-                Icons.health_and_safety,
-                const Color(0xFFff9a9e),
-                () {
-                  Navigator.pushNamed(context, '/financial-health');
-                },
-              ),
+              // Card kosong untuk menjaga tata letak grid tetap seimbang
+              Container(),
             ],
           ),
         ],

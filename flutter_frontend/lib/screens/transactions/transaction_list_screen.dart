@@ -154,16 +154,17 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                transaction.category?.name ??
-                                transaction.savingsGoal?.name ??
-                                transaction.billReminder?.name ??
-                                'Tanpa Kategori',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: Theme.of(context).textTheme.titleLarge?.color,
-                                ),
+                              Consumer<TransactionProvider>(
+                                builder: (context, transactionProvider, child) {
+                                  return Text(
+                                    transactionProvider.getTransactionName(transaction),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: Theme.of(context).textTheme.titleLarge?.color,
+                                    ),
+                                  );
+                                },
                               ),
                               const SizedBox(height: 4),
                               Text(
